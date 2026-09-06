@@ -5,7 +5,7 @@
 	<key>CFBundleDisplayName</key>
 	<string>TwitCasting Comment Helper</string>
 	<key>CFBundleExecutable</key>
-	<string>twitcasting_helper</string>
+	<string>streamlink</string>
 	<key>CFBundleIconFile</key>
 	<string>icon-windowed.icns</string>
 	<key>CFBundleIdentifier</key>
@@ -20,6 +20,8 @@
 	<string>1.1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1.1.0</string>
+	<key>LSBackgroundOnly</key>
+	<true/>
 	<key>LSMinimumSystemVersion</key>
 	<string>11.0</string>
 	<key>NSHighResolutionCapable</key>
