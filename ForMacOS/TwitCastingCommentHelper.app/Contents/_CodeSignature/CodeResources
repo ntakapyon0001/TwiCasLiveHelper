@@ -814,7 +814,7 @@
 		</data>
 		<key>Resources/base_library.zip</key>
 		<data>
-		vNTnYnVPXrxVatDWau0sO0DbR6Y=
+		nKBgDJLMUoA6E2ztRWKRBqaCYMQ=
 		</data>
 		<key>Resources/certifi/cacert.pem</key>
 		<data>
@@ -5176,14 +5176,14 @@
 			<key>requirement</key>
 			<string>cdhash H"469acb20119cb8b025aace641e51a27bf370ca42"</string>
 		</dict>
-		<key>Frameworks/_ma_playback.abi3.so</key>
+		<key>Frameworks/_miniaudio.abi3.so</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			DL0NN2d9UdmgVzRQuL207fL4cG0=
+			JjiM8MWdVLVwrwO3wooaur1aJxc=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"0cbd0d37677d51d9a0573450b8bdb4edf2f8706d"</string>
+			<string>cdhash H"26388cf0c59d54b570af03b7c28a1ababd5a2717"</string>
 		</dict>
 		<key>Frameworks/_tcl_data</key>
 		<dict>
@@ -5953,14 +5953,14 @@
 			<key>symlink</key>
 			<string>../Resources/trio-0.34.0.dist-info</string>
 		</dict>
-		<key>MacOS/twitcasting_helper</key>
+		<key>MacOS/streamlink</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			Z6pp23E4OTTraHXS5lwhwegUpwI=
+			tKY7+FEiwDbkUJQmp3rZJCBt67U=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"67aa69db71383934eb6875d2e65c21c1e814a702"</string>
+			<string>cdhash H"b4a63bf85122c036e4509426a77ad924206debb5"</string>
 		</dict>
 		<key>Resources/Crypto</key>
 		<dict>
@@ -5997,10 +5997,10 @@
 			<key>symlink</key>
 			<string>../Frameworks/_cffi_backend.cpython-314-darwin.so</string>
 		</dict>
-		<key>Resources/_ma_playback.abi3.so</key>
+		<key>Resources/_miniaudio.abi3.so</key>
 		<dict>
 			<key>symlink</key>
-			<string>../Frameworks/_ma_playback.abi3.so</string>
+			<string>../Frameworks/_miniaudio.abi3.so</string>
 		</dict>
 		<key>Resources/_tcl_data/auto.tcl</key>
 		<dict>
@@ -7420,7 +7420,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			RvL2Al7xBkHm6hj21SazDuNkin8+t6UgWspkwxoeEQk=
+			2Yf5FASRjNpLn+NIqV1diL5/qiv2/cnREED2uMe1eC8=
 			</data>
 		</dict>
 		<key>Resources/certifi/cacert.pem</key>
