@@ -5,9 +5,10 @@ $type live
 $region Spain
 """
 
-import logging
 import re
+from urllib.parse import urlparse
 
+from streamlink.logger import getLogger
 from streamlink.plugin import Plugin, pluginmatcher
 from streamlink.plugin.api import validate
 from streamlink.stream.dash import DASHStream
@@ -15,72 +16,146 @@ from streamlink.stream.hls import HLSStream
 from streamlink.utils.url import update_scheme
 
 
-log = logging.getLogger(__name__)
+log = getLogger(__name__)
 
 
-@pluginmatcher(re.compile(
-    r"https?://(?:www\.)?atresplayer\.com/directos/.+",
-))
+@pluginmatcher(
+    re.compile(r"https?://(?:www\.)?atresplayer\.com/directos/.+"),
+)
 class AtresPlayer(Plugin):
-    _channels_api_url = "https://api.atresplayer.com/client/v1/info/channels"
-    _player_api_url = "https://api.atresplayer.com/player/v1/live/{channel_id}?NODRM=true"
+    _live_api_url = "https://api.atresplayer.com/client/v1/row/live"
+    _stream_priorities = {
+        "application/hls+legacy": 0,
+        "application/hls+legacyv3": 1,
+        "application/hls+ssai": 2,
+        "application/vnd.apple.mpegurl": 3,
+        "application/dash+ssai": 4,
+        "application/dash+xml": 5,
+        "application/hls+hevc": 6,
+        "application/dash+hevc": 7,
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.url = update_scheme("https://", f"{self.url.rstrip('/')}/")
 
     def _get_streams(self):
-        channel_path = f"/{self.url.split('/')[-2]}/"
-        channel_data = self.session.http.get(self._channels_api_url, schema=validate.Schema(
-            validate.parse_json(),
-            [{
-                "id": str,
-                "link": {"url": str},
-            }],
-            validate.filter(lambda item: item["link"]["url"] == channel_path),
-        ))
-        if not channel_data:
-            return
-        channel_id = channel_data[0]["id"]
+        channel_path = urlparse(self.url).path
 
-        player_api_url = self._player_api_url.format(channel_id=channel_id)
-        log.debug(f"Player API URL: {player_api_url}")
+        log.debug(f"Channel path: {channel_path}")
 
-        sources = self.session.http.get(player_api_url, acceptable_status=(200, 403), schema=validate.Schema(
-            validate.parse_json(),
-            validate.any(
+        channels = self.session.http.get(
+            self._live_api_url,
+            schema=validate.Schema(
+                validate.parse_json(),
                 {
-                    "error": str,
-                    "error_description": str,
-                },
-                {
-                    "sourcesLive": [
-                        validate.all(
-                            {
-                                "src": validate.url(),
-                                validate.optional("type"): str,
+                    "itemRows": [
+                        {
+                            "link": {
+                                "url": str,
+                                "href": validate.url(),
                             },
-                            validate.union_get("type", "src"),
-                        ),
+                        },
                     ],
                 },
+                validate.get("itemRows"),
             ),
-        ))
+        )
+
+        channel = next(
+            (item for item in channels if item["link"]["url"] == channel_path),
+            None,
+        )
+
+        if not channel:
+            log.error(f"Could not find live channel: {channel_path}")
+            return
+
+        page_api_url = channel["link"]["href"]
+
+        log.debug(f"Page API URL: {page_api_url}")
+
+        video_api_url = self.session.http.get(
+            page_api_url,
+            schema=validate.Schema(
+                validate.parse_json(),
+                {
+                    "urlVideo": validate.url(),
+                },
+                validate.get("urlVideo"),
+            ),
+        )
+
+        log.debug(f"Video API URL: {video_api_url}")
+
+        sources = self.session.http.get(
+            video_api_url,
+            acceptable_status=(200, 403),
+            schema=validate.Schema(
+                validate.parse_json(),
+                validate.any(
+                    {
+                        "error": str,
+                        "error_description": str,
+                    },
+                    {
+                        "sourcesLive": [
+                            validate.all(
+                                {
+                                    "src": validate.url(),
+                                    validate.optional("type"): str,
+                                },
+                                validate.union_get("type", "src"),
+                            ),
+                        ],
+                    },
+                ),
+            ),
+        )
+
         if "error" in sources:
             log.error(f"Player API error: {sources['error']} - {sources['error_description']}")
             return
 
-        for streamtype, streamsrc in sources.get("sourcesLive"):
+        for streamtype, streamsrc in sorted(
+            sources.get("sourcesLive", []),
+            key=lambda source: self._stream_priorities.get(source[0], -1),
+            reverse=True,
+        ):
             log.debug(f"Stream source: {streamsrc} ({streamtype or 'n/a'})")
 
-            if streamtype == "application/vnd.apple.mpegurl":
-                streams = HLSStream.parse_variant_playlist(self.session, streamsrc)
+            if streamtype in (
+                "application/vnd.apple.mpegurl",
+                "application/hls+legacy",
+                "application/hls+legacyv3",
+                "application/hls+ssai",
+                "application/hls+hevc",
+            ):
+                streams = HLSStream.parse_variant_playlist(
+                    self.session,
+                    streamsrc,
+                )
+
                 if not streams:
                     yield "live", HLSStream(self.session, streamsrc)
                 else:
                     yield from streams.items()
-            elif streamtype == "application/dash+xml":
-                yield from DASHStream.parse_manifest(self.session, streamsrc).items()
+
+                return
+
+            elif streamtype in (
+                "application/dash+xml",
+                "application/dash+ssai",
+                "application/dash+hevc",
+            ):
+                streams = DASHStream.parse_manifest(
+                    self.session,
+                    streamsrc,
+                )
+
+                if streams:
+                    yield from streams.items()
+                    return
 
 
 __plugin__ = AtresPlayer

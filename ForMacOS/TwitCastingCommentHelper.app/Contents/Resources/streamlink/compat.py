@@ -1,35 +1,55 @@
+from __future__ import annotations
+
 import importlib
 import inspect
 import os
 import sys
 import warnings
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any
 
 
 try:
-    from builtins import BaseExceptionGroup, ExceptionGroup  # type: ignore[attr-defined]
+    from builtins import BaseExceptionGroup, ExceptionGroup  # type: ignore[attr-defined, ty:unresolved-import]
 except ImportError:  # pragma: no cover
-    from exceptiongroup import BaseExceptionGroup, ExceptionGroup  # type: ignore[import]
+    from exceptiongroup import BaseExceptionGroup, ExceptionGroup  # type: ignore[import, ty:unresolved-import]
 
+from requests.compat import chardet as charset_normalizer
 
 from streamlink.exceptions import StreamlinkDeprecationWarning
 
 
-# compatibility import of charset_normalizer/chardet via requests<3.0
-try:
-    from requests.compat import chardet as charset_normalizer  # type: ignore
-except ImportError:  # pragma: no cover
-    import charset_normalizer
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping
+    from typing import Protocol, TypedDict
+
+    # The return value of requests' compatibility import function for charset_normalizer/chardet can be None,
+    # even though it's not possible due to charset_normalizer being a dependency since requests 2.26.0,
+    # with chardet being an optional dependency (that is still prioritized over charset_normalizer though).
+    # Make type checkers happy with this assertion once requests switches to inline typing annotations.
+    # With the requests type stubs provided by typeshed, we suppress the import type error.
+    assert charset_normalizer is not None
+
+    class _DetectEncodingResult(TypedDict):
+        encoding: str | None
+        language: str
+        confidence: float | None
+
+    class _DetectEncoding(Protocol):
+        def __call__(self, byte_str: bytes, should_rename_legacy: bool = False, **kwargs: Any) -> _DetectEncodingResult: ...
 
 
+is_linux = sys.platform == "linux"
+is_android = sys.platform == "android"
 is_darwin = sys.platform == "darwin"
+is_freebsd = sys.platform.startswith("freebsd")
+is_posix = os.name == "posix"
 is_win32 = os.name == "nt"
 
 
-detect_encoding = charset_normalizer.detect
+detect_encoding: _DetectEncoding = charset_normalizer.detect
 
 
-def deprecated(items: Dict[str, Tuple[Optional[str], Any, Any]]) -> None:
+def deprecated(items: Mapping[str, tuple[str | None, Any, Any]]) -> None:
     """
     Deprecate specific module attributes.
 
@@ -44,7 +64,7 @@ def deprecated(items: Dict[str, Tuple[Optional[str], Any, Any]]) -> None:
     """
 
     mod_globals = inspect.stack()[1].frame.f_globals
-    orig_getattr: Optional[Callable[[str], Any]] = mod_globals.get("__getattr__", None)
+    orig_getattr: Callable[[str], Any] | None = mod_globals.get("__getattr__", None)
 
     def __getattr__(name: str) -> Any:
         if name in items:
@@ -56,8 +76,8 @@ def deprecated(items: Dict[str, Tuple[Optional[str], Any, Any]]) -> None:
                 stacklevel=2,
             )
             if path:
-                *_path, name = path.split(".")
-                imported = importlib.import_module(".".join(_path))
+                *parts, name = path.split(".")
+                imported = importlib.import_module(".".join(parts))
                 obj = getattr(imported, name, None)
 
             return obj
@@ -80,6 +100,10 @@ __all__ = [
     "ExceptionGroup",
     "deprecated",
     "detect_encoding",
+    "is_linux",
+    "is_android",
     "is_darwin",
+    "is_freebsd",
+    "is_posix",
     "is_win32",
 ]

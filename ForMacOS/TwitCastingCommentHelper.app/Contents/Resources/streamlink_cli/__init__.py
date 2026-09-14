@@ -1,5 +1,7 @@
+# ruff: file-ignore[non-empty-init-module]
+
 from signal import SIGINT, SIGTERM, signal
-from sys import exit  # noqa: A004
+from sys import exit  # ruff: ignore[builtin-import-shadowing]
 
 
 def _exit(*_):

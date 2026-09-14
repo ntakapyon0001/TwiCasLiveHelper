@@ -6,16 +6,16 @@ $metadata id
 $metadata title
 """
 
-import logging
 import re
 from operator import itemgetter
 
+from streamlink.logger import getLogger
 from streamlink.plugin import Plugin, pluginmatcher
 from streamlink.plugin.api import validate
 from streamlink.stream.hls import HLSStream
 
 
-log = logging.getLogger(__name__)
+log = getLogger(__name__)
 
 
 @pluginmatcher(
@@ -40,31 +40,34 @@ class ArteTV(Plugin):
             language=self.match["language"],
             id=self.id,
         )
-        streams, metadata = self.session.http.get(json_url, schema=validate.Schema(
-            validate.parse_json(),
-            {"data": {"attributes": dict}},
-            validate.get(("data", "attributes")),
-            {
-                "streams": validate.any(
-                    [],
-                    [
-                        validate.all(
-                            {
-                                "slot": int,
-                                "protocol": str,
-                                "url": validate.url(),
-                            },
-                            validate.union_get("slot", "protocol", "url"),
-                        ),
-                    ],
-                ),
-                "metadata": {
-                    "title": str,
-                    "subtitle": validate.any(None, str),
+        streams, metadata = self.session.http.get(
+            json_url,
+            schema=validate.Schema(
+                validate.parse_json(),
+                {"data": {"attributes": dict}},
+                validate.get(("data", "attributes")),
+                {
+                    "streams": validate.any(
+                        [],
+                        [
+                            validate.all(
+                                {
+                                    "slot": int,
+                                    "protocol": str,
+                                    "url": validate.url(),
+                                },
+                                validate.union_get("slot", "protocol", "url"),
+                            ),
+                        ],
+                    ),
+                    "metadata": {
+                        "title": str,
+                        "subtitle": validate.any(None, str),
+                    },
                 },
-            },
-            validate.union_get("streams", "metadata"),
-        ))
+                validate.union_get("streams", "metadata"),
+            ),
+        )
 
         self.title = f"{metadata['title']} - {metadata['subtitle']}" if metadata["subtitle"] else metadata["title"]
 

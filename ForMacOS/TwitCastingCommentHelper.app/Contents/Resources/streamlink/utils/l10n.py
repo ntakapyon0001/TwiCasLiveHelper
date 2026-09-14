@@ -1,16 +1,18 @@
+from __future__ import annotations
+
 import locale
-import logging
-from typing import Optional
 from warnings import catch_warnings
 
-from pycountry import countries, languages  # type: ignore[import]
+from pycountry import countries, languages
+
+from streamlink.logger import getLogger
 
 
 DEFAULT_LANGUAGE = "en"
 DEFAULT_COUNTRY = "US"
 DEFAULT_LANGUAGE_CODE = f"{DEFAULT_LANGUAGE}_{DEFAULT_COUNTRY}"
 
-log = logging.getLogger(__name__)
+log = getLogger(__name__)
 
 
 class Country:
@@ -51,13 +53,8 @@ class Country:
         )
 
     def __str__(self):
-        return "Country({0!r}, {1!r}, {2!r}, {3!r}, official_name={4!r})".format(
-            self.alpha2,
-            self.alpha3,
-            self.numeric,
-            self.name,
-            self.official_name,
-        )
+        alpha2, alpha3, numeric, name, official_name = self.alpha2, self.alpha3, self.numeric, self.name, self.official_name
+        return f"Country({alpha2!r}, {alpha3!r}, {numeric!r}, {name!r}, {official_name=!r})"
 
 
 class Language:
@@ -99,12 +96,8 @@ class Language:
         )
 
     def __str__(self):
-        return "Language({0!r}, {1!r}, {2!r}, bibliographic={3!r})".format(
-            self.alpha2,
-            self.alpha3,
-            self.name,
-            self.bibliographic,
-        )
+        alpha2, alpha3, name, bibliographic = self.alpha2, self.alpha3, self.name, self.bibliographic
+        return f"Language({alpha2!r}, {alpha3!r}, {name!r}, {bibliographic=!r})"
 
 
 class Localization:
@@ -152,12 +145,24 @@ class Localization:
             self._language_code = DEFAULT_LANGUAGE_CODE
         log.debug(f"Language code: {self._language_code}")
 
-    def equivalent(self, language: Optional[str] = None, country: Optional[str] = None) -> bool:
+    def equivalent(
+        self,
+        language: Language | str | None = None,
+        country: Country | str | None = None,
+    ) -> bool:
         try:
             return (
-                (not language or self.language == self.get_language(language))
-                and (not country or self.country == self.get_country(country))
-            )
+                (
+                    not language
+                    or isinstance(language, Language) and self.language == language
+                    or self.language == self.get_language(language)
+                )
+                and (
+                    not country
+                    or isinstance(country, Country) and self.country == country
+                    or self.country == self.get_country(country)
+                )
+            )  # fmt: skip
         except LookupError:
             # if an unknown language/country code is given, they cannot be equivalent
             return False

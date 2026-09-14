@@ -1,8 +1,15 @@
+from __future__ import annotations
+
 import re
-from datetime import datetime, timezone, tzinfo
-from typing import Callable, Generic, Type, TypeVar
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from isodate import LOCAL, parse_datetime  # type: ignore[import]
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from datetime import tzinfo
 
 
 UTC = timezone.utc
@@ -95,8 +102,8 @@ class _HoursMinutesSeconds(Generic[_THMS]):
         re.VERBOSE | re.IGNORECASE,
     )
 
-    def __init__(self, return_type: Type[_THMS]):
-        self._return_type: Type[_THMS] = return_type
+    def __init__(self, return_type: type[_THMS]):
+        self._return_type: type[_THMS] = return_type
 
     def __call__(self, value: str) -> _THMS:
         if self._re_float.match(value):
@@ -125,11 +132,7 @@ hours_minutes_seconds_float: Callable[[str], float] = _HoursMinutesSeconds[float
 def seconds_to_hhmmss(seconds):
     hours, seconds = divmod(seconds, 3600)
     minutes, seconds = divmod(seconds, 60)
-    return "{0:02d}:{1:02d}:{2}".format(
-        int(hours),
-        int(minutes),
-        "{0:02.1f}".format(seconds) if seconds % 1 else "{0:02d}".format(int(seconds)),
-    )
+    return f"{hours:02.0f}:{minutes:02.0f}:{f'{seconds:02.1f}' if seconds % 1 else f'{seconds:02.0f}'}"
 
 
 __all__ = [

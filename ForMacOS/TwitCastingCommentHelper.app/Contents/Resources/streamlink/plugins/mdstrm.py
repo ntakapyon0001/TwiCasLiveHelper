@@ -3,40 +3,41 @@ $description CDN hosting live content for various websites in the Americas.
 $url mdstrm.com
 $url latina.pe/tvenvivo
 $url saltillo.multimedios.com/video
-$type live
+$type live, vod
 $metadata id
 $metadata title
 """
-import logging
-import re
-from urllib.parse import urlparse
 
+import re
+from urllib.parse import parse_qsl, urlparse
+
+from streamlink.logger import getLogger
 from streamlink.plugin import Plugin, pluginmatcher
 from streamlink.plugin.api import validate
 from streamlink.stream.hls import HLSStream
 from streamlink.utils.url import update_scheme
 
 
-log = logging.getLogger(__name__)
+log = getLogger(__name__)
 
 
-@pluginmatcher(re.compile(
-    r"https://(?:www\.)?latina\.pe/tvenvivo",
-))
-@pluginmatcher(re.compile(
-    r"https://saltillo\.multimedios\.com/video",
-))
-@pluginmatcher(re.compile(
-    r"https://mdstrm\.com/live-stream/\w+",
-))
+@pluginmatcher(
+    re.compile(r"https://(?:www\.)?latina\.pe/tvenvivo"),
+)
+@pluginmatcher(
+    re.compile(r"https://saltillo\.multimedios\.com/video"),
+)
+@pluginmatcher(
+    re.compile(r"https://mdstrm\.com/(?:live-stream|embed)/\w+"),
+)
 class MDStrm(Plugin):
     @staticmethod
     def get_script_str(root, search_string, custom_pattern=None, custom_schema=None):
         if custom_pattern:
             pattern = custom_pattern
         else:
-            pattern = fr"{search_string}\s*=\s*'([^']+)';"
-        _schema = validate.Schema(
+            pattern = rf"{search_string}\s*=\s*'([^']+)';"
+        schema = validate.Schema(
             validate.xml_xpath_string(
                 ".//script[@type='text/javascript'][contains(text(),$search_string)]/text()",
                 search_string=search_string,
@@ -46,18 +47,21 @@ class MDStrm(Plugin):
                 validate.none_or_all(validate.get(1)),
             ),
         )
-        _string = _schema.validate(root)
-        if not _string:
+        string = schema.validate(root)
+        if not string:
             log.debug(f"Failed to find {search_string}")
         if custom_schema:
             try:
-                _string = custom_schema.validate(_string)
+                string = custom_schema.validate(string)
             except ValueError:
                 pass
-        return _string
+        return string
 
     def _get_streams(self):
-        p_netloc = urlparse(self.url).netloc
+        parsed_url = urlparse(self.url)
+        query = dict(parse_qsl(parsed_url.query))
+
+        p_netloc = parsed_url.netloc
         if p_netloc == "mdstrm.com":
             url_iframe = self.url
         else:
@@ -87,7 +91,7 @@ class MDStrm(Plugin):
             validate.parse_json(),
             {
                 "id": str,
-                "isOnline": bool,
+                validate.optional("isOnline"): bool,
                 "src": {"hls": validate.url()},
                 "type": str,
                 "without_cookies": bool,
@@ -147,8 +151,10 @@ class MDStrm(Plugin):
                 params["adInsertionSessionId"] = ad
             else:
                 log.debug("Failed to find 'parent._dai_session'")
+        if (access_token := query.get("access_token")) is not None:
+            params["access_token"] = access_token
 
-        log.trace(f"{params!r}")
+        log.trace("%r", params)
         self.id = options["id"]
         self.title = options["title"]
         return HLSStream.parse_variant_playlist(

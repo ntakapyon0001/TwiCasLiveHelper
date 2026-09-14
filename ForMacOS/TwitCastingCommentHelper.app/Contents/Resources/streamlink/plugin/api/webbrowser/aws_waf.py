@@ -1,17 +1,23 @@
-import logging
+from __future__ import annotations
+
 import time
-from typing import Optional
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 import trio
 from requests.cookies import RequestsCookieJar
 
 from streamlink.compat import BaseExceptionGroup
-from streamlink.session import Streamlink
-from streamlink.webbrowser.cdp import CDPClient, CDPClientSession, devtools
+from streamlink.logger import getLogger
+from streamlink.webbrowser.cdp import CDPClient
 
 
-log = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from streamlink.session import Streamlink
+    from streamlink.webbrowser.cdp import CDPClientSession, devtools
+
+
+log = getLogger(__name__)
 
 
 class AWSWAF:
@@ -28,8 +34,8 @@ class AWSWAF:
         self.session = session
 
     def acquire(self, url: str) -> bool:
-        send: trio.MemorySendChannel[Optional[str]]
-        receive: trio.MemoryReceiveChannel[Optional[str]]
+        send: trio.MemorySendChannel[str | None]
+        receive: trio.MemoryReceiveChannel[str | None]
 
         data = None
         send, receive = trio.open_memory_channel(1)
@@ -53,7 +59,6 @@ class AWSWAF:
             return await client_session.fulfill_request(request, body="")
 
         async def acquire_token(client: CDPClient):
-            client_session: CDPClientSession
             async with client.session(max_buffer_size=100) as client_session:
                 client_session.add_request_handler(on_request, on_request=True)
                 with trio.move_on_after(timeout):
