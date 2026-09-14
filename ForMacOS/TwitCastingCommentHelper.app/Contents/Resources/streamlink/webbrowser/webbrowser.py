@@ -1,26 +1,20 @@
-from __future__ import annotations
-
+import logging
+import sys
 import tempfile
 from contextlib import asynccontextmanager, contextmanager
 from functools import partial
+from pathlib import Path
 from subprocess import DEVNULL
-from typing import TYPE_CHECKING
+from typing import AsyncContextManager, AsyncGenerator, Generator, List, Optional, Union
 
 import trio
 
 from streamlink.compat import BaseExceptionGroup
-from streamlink.logger import getLogger
 from streamlink.utils.path import resolve_executable
 from streamlink.webbrowser.exceptions import WebbrowserError
 
 
-if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator, Generator
-    from contextlib import AbstractAsyncContextManager
-    from pathlib import Path
-
-
-log = getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 class Webbrowser:
@@ -29,39 +23,39 @@ class Webbrowser:
     TIMEOUT = 10
 
     @classmethod
-    def names(cls) -> list[str]:
+    def names(cls) -> List[str]:
         return []
 
     @classmethod
-    def fallback_paths(cls) -> list[str | Path]:
+    def fallback_paths(cls) -> List[Union[str, Path]]:
         return []
 
     @classmethod
-    def launch_args(cls) -> list[str]:
+    def launch_args(cls) -> List[str]:
         return []
 
-    def __init__(self, executable: str | None = None):
+    def __init__(self, executable: Optional[str] = None):
         resolved = resolve_executable(executable, self.names(), self.fallback_paths())
         if not resolved:
             raise WebbrowserError(
                 f"Invalid web browser executable: {executable}"
-                if executable
-                else f"{self.ERROR_RESOLVE}: Please set the path to a supported web browser using --webbrowser-executable",
+                if executable else
+                f"{self.ERROR_RESOLVE}: Please set the path to a supported web browser using --webbrowser-executable",
             )
 
-        self.executable: str | Path = resolved
-        self.arguments: list[str] = self.launch_args().copy()
+        self.executable: Union[str, Path] = resolved
+        self.arguments: List[str] = self.launch_args().copy()
 
-    def launch(self, headless: bool = False, timeout: float | None = None) -> AbstractAsyncContextManager[trio.Nursery]:
+    def launch(self, headless: bool = False, timeout: Optional[float] = None) -> AsyncContextManager[trio.Nursery]:
         return self._launch(self.executable, self.arguments, headless=headless, timeout=timeout)
 
     def _launch(
         self,
-        executable: str | Path,
-        arguments: list[str],
+        executable: Union[str, Path],
+        arguments: List[str],
         headless: bool = False,
-        timeout: float | None = None,
-    ) -> AbstractAsyncContextManager[trio.Nursery]:
+        timeout: Optional[float] = None,
+    ) -> AsyncContextManager[trio.Nursery]:
         if timeout is None:
             timeout = self.TIMEOUT
 
@@ -73,12 +67,13 @@ class Webbrowser:
     @staticmethod
     @contextmanager
     def _create_temp_dir() -> Generator[str, None, None]:
-        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as temp_file:
+        kwargs = {"ignore_cleanup_errors": True} if sys.version_info >= (3, 10) else {}
+        with tempfile.TemporaryDirectory(**kwargs) as temp_file:  # type: ignore[call-overload]
             yield temp_file
 
 
 class _WebbrowserLauncher:
-    def __init__(self, executable: str | Path, arguments: list[str], headless: bool, timeout: float):
+    def __init__(self, executable: Union[str, Path], arguments: List[str], headless: bool, timeout: float):
         self.executable = executable
         self.arguments = arguments
         self.headless = headless
@@ -87,7 +82,7 @@ class _WebbrowserLauncher:
 
     @asynccontextmanager
     async def launch(self) -> AsyncGenerator[trio.Nursery, None]:
-        try:  # ruff: ignore[too-many-statements-in-try-clause]
+        try:
             headless = self.headless
             async with trio.open_nursery() as nursery:
                 log.info(f"Launching web browser: {self.executable} ({headless=})")
@@ -117,7 +112,7 @@ class _WebbrowserLauncher:
                     # once the application logic is done, cancel the entire task group and terminate/kill the process
                     nursery.cancel_scope.cancel()
         except BaseExceptionGroup as exc_grp:  # TODO: py310 support end: use except*
-            exc: BaseException | BaseExceptionGroup | None = exc_grp.subgroup((KeyboardInterrupt, SystemExit))
+            exc: Union[BaseException, BaseExceptionGroup, None] = exc_grp.subgroup((KeyboardInterrupt, SystemExit))
             if not exc:  # not a KeyboardInterrupt or SystemExit
                 raise
             while isinstance(exc, BaseExceptionGroup):  # get the first actual exception in the potentially nested groups

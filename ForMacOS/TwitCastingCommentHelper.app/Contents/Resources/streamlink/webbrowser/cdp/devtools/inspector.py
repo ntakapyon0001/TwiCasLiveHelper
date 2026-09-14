@@ -3,20 +3,19 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all modules.
 #
-# CDP version: v0.0.1510116
+# CDP version: v0.0.1359167
 # CDP domain: Inspector (experimental)
 
 from __future__ import annotations
 
 import enum
-from collections.abc import Generator
+import typing
 from dataclasses import dataclass
-from typing import Any
 
-from streamlink.webbrowser.cdp.devtools.util import T_JSON_DICT, CDPEvent
+from streamlink.webbrowser.cdp.devtools.util import T_JSON_DICT, event_class
 
 
-def disable() -> Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
     """
     Disables inspector domain notifications.
     """
@@ -26,7 +25,7 @@ def disable() -> Generator[T_JSON_DICT, T_JSON_DICT, None]:
     yield cmd_dict
 
 
-def enable() -> Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
     """
     Enables inspector domain notifications.
     """
@@ -36,8 +35,9 @@ def enable() -> Generator[T_JSON_DICT, T_JSON_DICT, None]:
     yield cmd_dict
 
 
+@event_class("Inspector.detached")
 @dataclass
-class Detached(CDPEvent, event="Inspector.detached"):
+class Detached:
     """
     Fired when remote debugging connection is about to be terminated. Contains detach reason.
     """
@@ -51,8 +51,9 @@ class Detached(CDPEvent, event="Inspector.detached"):
         )
 
 
+@event_class("Inspector.targetCrashed")
 @dataclass
-class TargetCrashed(CDPEvent, event="Inspector.targetCrashed"):
+class TargetCrashed:
     """
     Fired when debugging target has crashed
     """
@@ -65,8 +66,9 @@ class TargetCrashed(CDPEvent, event="Inspector.targetCrashed"):
         )
 
 
+@event_class("Inspector.targetReloadedAfterCrash")
 @dataclass
-class TargetReloadedAfterCrash(CDPEvent, event="Inspector.targetReloadedAfterCrash"):
+class TargetReloadedAfterCrash:
     """
     Fired when debugging target has reloaded after crash
     """

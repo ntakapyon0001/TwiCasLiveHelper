@@ -7,18 +7,18 @@ $metadata title
 $region France, Andorra, Monaco
 """
 
+import logging
 import re
 from urllib.parse import urlparse
 
-from streamlink.logger import getLogger
-from streamlink.plugin import Plugin, pluginmatcher
+from streamlink.plugin import Plugin, PluginError, pluginmatcher
 from streamlink.plugin.api import useragents, validate
 from streamlink.stream.dash import DASHStream
 from streamlink.stream.hls import HLSStream
 from streamlink.utils.times import localnow
 
 
-log = getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 @pluginmatcher(
@@ -31,81 +31,71 @@ log = getLogger(__name__)
 )
 class Pluzz(Plugin):
     PLAYER_VERSION = "5.51.35"
-
-    _URL_GEO = "https://geoftv-a.akamaihd.net/ws/edgescape.json"
-    _URL_API = "https://k7.ftven.fr/videos/{video_id}"
-
-    _SCHEMA_VIDEOID_FRANCETV = validate.Schema(
-        validate.regex(
-            re.compile(r"""\\"options\\":\{\\"id\\":\\"(?P<video_id>[\dA-Fa-f-]{36})\\","""),
-            method="search",
-        ),
-        validate.get("video_id"),
-    )
-    _SCHEMA_VIDEOID_FRANCETVINFOFR = validate.Schema(
-        validate.parse_html(),
-        validate.any(
-            # overseas live stream
-            validate.all(
-                validate.xml_xpath_string(""".//script[contains(text(),'"data":{content:{player:{id:"')][1]/text()"""),
-                str,
-                validate.regex(
-                    re.compile(r""""data":\{content:\{player:\{id:"(?P<video_id>[\dA-Fa-f-]{36})","""),
-                    method="search",
-                ),
-                validate.get("video_id"),
-            ),
-            # news article
-            validate.all(
-                validate.xml_xpath_string(".//*[@id][contains(@class,'francetv-player-wrapper')][1]/@id"),
-                str,
-            ),
-            # videos
-            validate.all(
-                validate.xml_xpath_string(".//*[@data-id][contains(@class,'magneto')][1]/@data-id"),
-                str,
-            ),
-            validate.transform(lambda *_: None),
-        ),
-    )
-
-    def _get_video_id(self):
-        return self.session.http.get(
-            self.url,
-            schema=self._SCHEMA_VIDEOID_FRANCETV if self.matches["francetv"] else self._SCHEMA_VIDEOID_FRANCETVINFOFR,
-        )
+    GEO_URL = "https://geoftv-a.akamaihd.net/ws/edgescape.json"
+    API_URL = "https://k7.ftven.fr/videos/{video_id}"
 
     def _get_streams(self):
         self.session.http.headers.update({
             "User-Agent": useragents.CHROME,
         })
-        if not (m := re.compile(r"Chrome/(\d+)").search(useragents.CHROME)):
-            return
-        CHROME_VERSION = m.group(1)
+        CHROME_VERSION = re.compile(r"Chrome/(\d+)").search(useragents.CHROME).group(1)
 
-        if not (video_id := self._get_video_id()):
+        # Retrieve geolocation data
+        country_code = self.session.http.get(self.GEO_URL, schema=validate.Schema(
+            validate.parse_json(),
+            {"reponse": {"geo_info": {
+                "country_code": str,
+            }}},
+            validate.get(("reponse", "geo_info", "country_code")),
+        ))
+        log.debug(f"Country: {country_code}")
+
+        # Retrieve URL page and search for video ID
+        video_id = None
+        try:
+            video_id = self.session.http.get(self.url, schema=validate.Schema(
+                validate.parse_html(),
+                validate.any(
+                    # default francetv player
+                    validate.all(
+                        validate.xml_xpath_string(".//script[contains(text(),'window.FTVPlayerVideos')][1]/text()"),
+                        str,
+                        validate.regex(re.compile(
+                            r"window\.FTVPlayerVideos\s*=\s*(?P<json>\[{.+?}])\s*;\s*(?:$|var)",
+                            re.DOTALL,
+                        )),
+                        validate.get("json"),
+                        validate.parse_json(),
+                        [{"videoId": str}],
+                        validate.get((0, "videoId")),
+                    ),
+                    # francetvinfo.fr overseas live stream
+                    validate.all(
+                        validate.xml_xpath_string(".//script[contains(text(),'magneto:{videoId:')][1]/text()"),
+                        str,
+                        validate.regex(re.compile(r"""magneto:\{videoId:(?P<q>['"])(?P<video_id>.+?)(?P=q)""")),
+                        validate.get("video_id"),
+                    ),
+                    # francetvinfo.fr news article
+                    validate.all(
+                        validate.xml_xpath_string(".//*[@id][contains(@class,'francetv-player-wrapper')][1]/@id"),
+                        str,
+                    ),
+                    # francetvinfo.fr videos
+                    validate.all(
+                        validate.xml_xpath_string(".//*[@data-id][contains(@class,'magneto')][1]/@data-id"),
+                        str,
+                    ),
+                ),
+            ))
+        except PluginError:
+            pass
+        if not video_id:
             return
         log.debug(f"Video ID: {video_id}")
 
-        # Retrieve geolocation data
-        country_code = self.session.http.get(
-            self._URL_GEO,
-            schema=validate.Schema(
-                validate.parse_json(),
-                {
-                    "reponse": {
-                        "geo_info": {
-                            "country_code": str,
-                        },
-                    },
-                },
-                validate.get(("reponse", "geo_info", "country_code")),
-            ),
-        )
-        log.debug(f"Country: {country_code}")
-
         video_format, token_url, url, self.title = self.session.http.get(
-            self._URL_API.format(video_id=video_id),
+            self.API_URL.format(video_id=video_id),
             params={
                 "country_code": country_code,
                 "w": 1920,

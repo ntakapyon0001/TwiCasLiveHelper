@@ -1,34 +1,34 @@
-from __future__ import annotations
-
 import warnings
 from pathlib import Path
 from socket import AF_INET, AF_INET6
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Iterator, Mapping, Tuple
+
+import urllib3.util.connection as urllib3_util_connection
+from requests.adapters import HTTPAdapter
 
 from streamlink.exceptions import StreamlinkDeprecationWarning
 from streamlink.options import Options
+from streamlink.session.http import TLSNoDHAdapter
 from streamlink.utils.url import update_scheme
 
 
-if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator, Mapping
-
+if TYPE_CHECKING:  # pragma: no cover
     from streamlink.session import Streamlink
 
 
 _session_file = str(Path(__file__).parent / "session.py")
 
+_original_allowed_gai_family = urllib3_util_connection.allowed_gai_family  # type: ignore[attr-defined]
 
-def _get_deprecation_stacklevel_offset(offset: int = 0) -> int:
-    """Deal with stacklevels of both session.{get_option,set_option}() and session.options.{get,set}() calls"""
-    from inspect import currentframe  # ruff: ignore[import-outside-top-level]
 
-    frame = currentframe()
-    ignoreframes = 2
+def _get_deprecation_stacklevel_offset():
+    """Deal with stacklevels of both session.{g,s}et_option() and session.options.{g,s}et() calls"""
+    from inspect import currentframe  # noqa: PLC0415
+
+    frame = currentframe().f_back.f_back
+    offset = 0
     while frame:
-        if ignoreframes > 0:
-            ignoreframes -= 1
-        elif frame.f_code.co_filename == _session_file and frame.f_code.co_name in ("set_option", "get_option"):
+        if frame.f_code.co_filename == _session_file and frame.f_code.co_name in ("set_option", "get_option"):
             offset += 1
             break
         frame = frame.f_back
@@ -56,10 +56,6 @@ class StreamlinkOptions(Options):
           - ``UserInputRequester | None``
           - ``None``
           - Instance of ``UserInputRequester`` to collect input from the user at runtime
-        * - no-plugin-cache
-          - ``bool``
-          - ``False``
-          - Disable the plugin key-value store
         * - locale
           - ``str``
           - *system locale*
@@ -68,7 +64,7 @@ class StreamlinkOptions(Options):
         * - interface
           - ``str | None``
           - ``None``
-          - Network interface name or address.
+          - Network interface address
         * - ipv4
           - ``bool``
           - ``False``
@@ -90,10 +86,6 @@ class StreamlinkOptions(Options):
           - ``{}``
           - A ``dict`` or a semicolon ``;`` delimited ``str`` of cookies to add to each HTTP/HTTPS request,
             e.g. ``foo=bar;baz=qux``
-        * - http-cookies-files
-          - ``list[str]``
-          - ``[]``
-          - A ``list`` of Netscape HTTP Cookie Files whose data will be added to HTTP/HTTPS requests
         * - http-headers
           - ``dict[str, str] | str``
           - ``{}``
@@ -145,22 +137,10 @@ class StreamlinkOptions(Options):
           - ``float``
           - ``10.0``
           - Segment connect and read timeout
-        * - stream-segmented-duration
-          - ``float``
-          - ``0.0``
-          - Limit the playback duration of segmented streams, rounded to the nearest segment
-        * - stream-segmented-queue-deadline
-          - ``float``
-          - ``3``
-          - Multiplication factor of the deadline for new segments to be queued
         * - stream-timeout
           - ``float``
           - ``60.0``
           - Timeout for reading data from stream
-        * - stream-passthrough-encrypted
-          - ``bool``
-          - ``False``
-          - Pass through encrypted stream segments without attempting decryption
         * - hls-live-edge
           - ``int``
           - ``3``
@@ -174,10 +154,10 @@ class StreamlinkOptions(Options):
           - ``0.0``
           - Number of seconds to skip from the beginning of the HLS stream,
             interpreted as a negative offset for livestreams
-        * - hls-duration *(deprecated)*
-          - ``float``
-          - ``0.0``
-          - See ``stream-segmented-duration``
+        * - hls-duration
+          - ``float | None``
+          - ``None``
+          - Limit the HLS stream playback duration, rounded to the nearest HLS segment
         * - hls-playlist-reload-attempts
           - ``int``
           - ``3``
@@ -190,10 +170,10 @@ class StreamlinkOptions(Options):
             - ``segment``: duration of the last segment
             - ``live-edge``: sum of segment durations of the ``hls-live-edge`` value minus one
             - ``default``: the playlist's target duration
-        * - hls-segment-queue-threshold *(deprecated)*
+        * - hls-segment-queue-threshold
           - ``float``
           - ``3``
-          - See ``stream-segmented-queue-deadline``
+          - Factor of the playlist's targetduration which sets the threshold for stopping early on missing segments
         * - hls-segment-stream-data
           - ``bool``
           - ``False``
@@ -217,6 +197,42 @@ class StreamlinkOptions(Options):
           - ``int``
           - ``3``
           - Max number of DASH manifest reload attempts before giving up
+        * - hls-segment-attempts *(deprecated)*
+          - ``int``
+          - ``3``
+          - See ``stream-segment-attempts``
+        * - hls-segment-threads *(deprecated)*
+          - ``int``
+          - ``3``
+          - See ``stream-segment-threads``
+        * - hls-segment-timeout *(deprecated)*
+          - ``float``
+          - ``10.00``
+          - See ``stream-segment-timeout``
+        * - hls-timeout *(deprecated)*
+          - ``float``
+          - ``60.00``
+          - See ``stream-timeout``
+        * - dash-segment-attempts *(deprecated)*
+          - ``int``
+          - ``3``
+          - See ``stream-segment-attempts``
+        * - dash-segment-threads *(deprecated)*
+          - ``int``
+          - ``3``
+          - See ``stream-segment-threads``
+        * - dash-segment-timeout *(deprecated)*
+          - ``float``
+          - ``10.00``
+          - See ``stream-segment-timeout``
+        * - dash-timeout *(deprecated)*
+          - ``float``
+          - ``60.00``
+          - See ``stream-timeout``
+        * - http-stream-timeout *(deprecated)*
+          - ``float``
+          - ``60.00``
+          - See ``stream-timeout``
         * - ffmpeg-ffmpeg
           - ``str | None``
           - ``None``
@@ -226,10 +242,6 @@ class StreamlinkOptions(Options):
           - ``bool``
           - ``False``
           - Disable FFmpeg validation and version logging
-        * - ffmpeg-validation-timeout
-          - ``float``
-          - ``4.0``
-          - Timeout in seconds for FFmpeg version validation
         * - ffmpeg-verbose
           - ``bool``
           - ``False``
@@ -292,10 +304,9 @@ class StreamlinkOptions(Options):
           - Whether to launch the webbrowser in headless mode or not
     """
 
-    def __init__(self, session: Streamlink) -> None:
-        super().__init__({
+    def __init__(self, session: "Streamlink") -> None:
+        super().__init__(defaults={
             "user-input-requester": None,
-            "no-plugin-cache": False,
             "locale": None,
             "interface": None,
             "ipv4": False,
@@ -305,15 +316,14 @@ class StreamlinkOptions(Options):
             "stream-segment-attempts": 3,
             "stream-segment-threads": 1,
             "stream-segment-timeout": 10.0,
-            "stream-segmented-duration": 0.0,
-            "stream-segmented-queue-deadline": 3,
             "stream-timeout": 60.0,
-            "stream-passthrough-encrypted": False,
             "hls-live-edge": 3,
             "hls-live-restart": False,
             "hls-start-offset": 0.0,
+            "hls-duration": None,
             "hls-playlist-reload-attempts": 3,
             "hls-playlist-reload-time": "default",
+            "hls-segment-queue-threshold": 3,
             "hls-segment-stream-data": False,
             "hls-segment-ignore-names": [],
             "hls-segment-key-uri": None,
@@ -321,7 +331,6 @@ class StreamlinkOptions(Options):
             "dash-manifest-reload-attempts": 3,
             "ffmpeg-ffmpeg": None,
             "ffmpeg-no-validation": False,
-            "ffmpeg-validation-timeout": 4.0,
             "ffmpeg-verbose": False,
             "ffmpeg-verbose-path": None,
             "ffmpeg-loglevel": None,
@@ -343,7 +352,7 @@ class StreamlinkOptions(Options):
     # ---- utils
 
     @staticmethod
-    def _parse_key_equals_value_string(delimiter: str, value: str) -> Iterator[tuple[str, str]]:
+    def _parse_key_equals_value_string(delimiter: str, value: str) -> Iterator[Tuple[str, str]]:
         for keyval in value.split(delimiter):
             try:
                 key, val = keyval.split("=", 1)
@@ -357,7 +366,7 @@ class StreamlinkOptions(Options):
             warnings.warn(
                 "The `https-proxy` option has been deprecated in favor of a single `http-proxy` option",
                 StreamlinkDeprecationWarning,
-                stacklevel=_get_deprecation_stacklevel_offset(4),
+                stacklevel=4 + _get_deprecation_stacklevel_offset(),
             )
 
     # ---- getters
@@ -372,45 +381,48 @@ class StreamlinkOptions(Options):
     # ---- setters
 
     def _set_interface(self, key, value):
-        self.session.http.set_interface(interface=value)
+        for scheme, adapter in self.session.http.adapters.items():
+            if scheme not in ("http://", "https://"):
+                continue
+            if not value:
+                adapter.poolmanager.connection_pool_kw.pop("source_address", None)
+            else:
+                # https://docs.python.org/3/library/socket.html#socket.create_connection
+                adapter.poolmanager.connection_pool_kw.update(source_address=(value, 0))
         self.set_explicit(key, None if not value else value)
 
     def _set_ipv4_ipv6(self, key, value):
-        match key, value:
-            case "ipv4", True:
-                self.session.http.set_address_family(family=AF_INET)
-                self.set_explicit("ipv4", True)
-                self.set_explicit("ipv6", False)
-            case "ipv6", True:
-                self.session.http.set_address_family(family=AF_INET6)
-                self.set_explicit("ipv4", False)
-                self.set_explicit("ipv6", True)
-            # only unset if the key's value is True
-            case _ if self.get_explicit(key):
-                self.session.http.set_address_family(family=None)
-                self.set_explicit("ipv4", False)
-                self.set_explicit("ipv6", False)
+        self.set_explicit(key, value)
+        if not value:
+            urllib3_util_connection.allowed_gai_family = _original_allowed_gai_family  # type: ignore[attr-defined]
+        elif key == "ipv4":
+            self.set_explicit("ipv6", False)
+            urllib3_util_connection.allowed_gai_family = (lambda: AF_INET)  # type: ignore[attr-defined]
+        else:
+            self.set_explicit("ipv4", False)
+            urllib3_util_connection.allowed_gai_family = (lambda: AF_INET6)  # type: ignore[attr-defined]
 
     def _set_http_proxy(self, key, value):
         self.session.http.proxies["http"] \
             = self.session.http.proxies["https"] \
-            = update_scheme("https://", value, force=False)  # fmt: skip
+            = update_scheme("https://", value, force=False)
         self._deprecate_https_proxy(key)
-
-    def _set_http_cookies_files(self, _, value):
-        for item in list(value):
-            self.session.http.set_cookies_from_file(item)
 
     def _set_http_attr(self, key, value):
         setattr(self.session.http, self._OPTIONS_HTTP_ATTRS[key], value)
 
     def _set_http_disable_dh(self, key, value):
-        self.session.http.disable_dh(disable=bool(value))
         self.set_explicit(key, value)
+        if value:
+            adapter = TLSNoDHAdapter()
+        else:
+            adapter = HTTPAdapter()
+
+        self.session.http.mount("https://", adapter)
 
     @staticmethod
-    def _factory_set_http_attr_key_equals_value(delimiter: str) -> Callable[[StreamlinkOptions, str, Any], None]:
-        def inner(self: StreamlinkOptions, key: str, value: Any) -> None:
+    def _factory_set_http_attr_key_equals_value(delimiter: str) -> Callable[["StreamlinkOptions", str, Any], None]:
+        def inner(self: "StreamlinkOptions", key: str, value: Any) -> None:
             getattr(self.session.http, self._OPTIONS_HTTP_ATTRS[key]).update(
                 value if isinstance(value, dict) else dict(self._parse_key_equals_value_string(delimiter, value)),
             )
@@ -418,20 +430,24 @@ class StreamlinkOptions(Options):
         return inner
 
     @staticmethod
-    def _factory_set_deprecated(name: str, mapper: Callable[[Any], Any]) -> Callable[[StreamlinkOptions, str, Any], None]:
-        def inner(self: StreamlinkOptions, key: str, value: Any) -> None:
+    def _factory_set_deprecated(name: str, mapper: Callable[[Any], Any]) -> Callable[["StreamlinkOptions", str, Any], None]:
+        def inner(self: "StreamlinkOptions", key: str, value: Any) -> None:
             self.set_explicit(name, mapper(value))
             warnings.warn(
                 f"`{key}` has been deprecated in favor of the `{name}` option",
                 StreamlinkDeprecationWarning,
-                stacklevel=_get_deprecation_stacklevel_offset(3),
+                stacklevel=3 + _get_deprecation_stacklevel_offset(),
             )
 
         return inner
 
+    # TODO: py39 support end: remove explicit dummy context binding of static method
+    _factory_set_http_attr_key_equals_value = _factory_set_http_attr_key_equals_value.__get__(object)
+    _factory_set_deprecated = _factory_set_deprecated.__get__(object)
+
     # ----
 
-    _OPTIONS_HTTP_ATTRS: ClassVar[Mapping[str, str]] = {
+    _OPTIONS_HTTP_ATTRS: ClassVar[Dict[str, str]] = {
         "http-cookies": "cookies",
         "http-headers": "headers",
         "http-query-params": "params",
@@ -441,7 +457,7 @@ class StreamlinkOptions(Options):
         "http-timeout": "timeout",
     }
 
-    _MAP_GETTERS: ClassVar[Mapping[str, Callable[[StreamlinkOptions, str], Any]]] = {
+    _MAP_GETTERS: ClassVar[Mapping[str, Callable[["StreamlinkOptions", str], Any]]] = {
         "http-proxy": _get_http_proxy,
         "https-proxy": _get_http_proxy,
         "http-cookies": _get_http_attr,
@@ -453,13 +469,12 @@ class StreamlinkOptions(Options):
         "http-timeout": _get_http_attr,
     }
 
-    _MAP_SETTERS: ClassVar[Mapping[str, Callable[[StreamlinkOptions, str, Any], None]]] = {
+    _MAP_SETTERS: ClassVar[Mapping[str, Callable[["StreamlinkOptions", str, Any], None]]] = {
         "interface": _set_interface,
         "ipv4": _set_ipv4_ipv6,
         "ipv6": _set_ipv4_ipv6,
         "http-proxy": _set_http_proxy,
         "https-proxy": _set_http_proxy,
-        "http-cookies-files": _set_http_cookies_files,
         "http-cookies": _factory_set_http_attr_key_equals_value(";"),
         "http-headers": _factory_set_http_attr_key_equals_value(";"),
         "http-query-params": _factory_set_http_attr_key_equals_value("&"),
@@ -468,6 +483,13 @@ class StreamlinkOptions(Options):
         "http-ssl-verify": _set_http_attr,
         "http-trust-env": _set_http_attr,
         "http-timeout": _set_http_attr,
-        "hls-duration": _factory_set_deprecated("stream-segmented-duration", float),
-        "hls-segment-queue-threshold": _factory_set_deprecated("stream-segmented-queue-deadline", float),
+        "dash-segment-attempts": _factory_set_deprecated("stream-segment-attempts", int),
+        "hls-segment-attempts": _factory_set_deprecated("stream-segment-attempts", int),
+        "dash-segment-threads": _factory_set_deprecated("stream-segment-threads", int),
+        "hls-segment-threads": _factory_set_deprecated("stream-segment-threads", int),
+        "dash-segment-timeout": _factory_set_deprecated("stream-segment-timeout", float),
+        "hls-segment-timeout": _factory_set_deprecated("stream-segment-timeout", float),
+        "dash-timeout": _factory_set_deprecated("stream-timeout", float),
+        "hls-timeout": _factory_set_deprecated("stream-timeout", float),
+        "http-stream-timeout": _factory_set_deprecated("stream-timeout", float),
     }

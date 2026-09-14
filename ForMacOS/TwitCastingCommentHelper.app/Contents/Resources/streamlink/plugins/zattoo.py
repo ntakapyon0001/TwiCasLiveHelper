@@ -17,57 +17,52 @@ $url www.meinewelt.cc
 $type live, vod
 """
 
+import logging
 import re
 import uuid
 
 from streamlink.cache import Cache
-from streamlink.logger import getLogger
 from streamlink.plugin import Plugin, pluginargument, pluginmatcher
 from streamlink.plugin.api import validate
 from streamlink.stream.dash import DASHStream
 from streamlink.stream.hls import HLSStream
 
 
-log = getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
-@pluginmatcher(
-    re.compile(
-        r"""
-            https?://
-            (?P<base_url>
-                (?:
-                    iptv\.glattvision|www\.(?:saktv|vtxtv)
-                )\.ch
-                |(?:
-                    mobiltv\.quickline|www\.quantum-tv|zattoo
-                )\.com
-                |(?:
-                    tvonline\.ewe|nettv\.netcologne|tvplus\.m-net
-                )\.de
-                |(?:
-                    player\.waly|www\.(?:1und1|netplus)
-                )\.tv
-                |www\.bbv-tv\.net
-                |www\.meinewelt\.cc
-            )/
-            (?:
-                (?:
-                    recording(?:s\?recording=|/)
-                    |
-                    (?:ondemand/)?watch/[^/\s]+/[^/]+/
-                )(?P<recording_id>\d+)
-                |
-                (?:
-                    (?:live/|watch/)|(?:channels(?:/\w+)?|guide)\?channel=
-                )(?P<channel>[^/\s]+)
-                |
-                ondemand(?:\?video=|/watch/)(?P<vod_id>[^-]+)
-            )
-        """,
-        re.VERBOSE,
-    ),
-)
+@pluginmatcher(re.compile(r"""
+    https?://
+    (?P<base_url>
+        (?:
+            iptv\.glattvision|www\.(?:saktv|vtxtv)
+        )\.ch
+        |(?:
+            mobiltv\.quickline|www\.quantum-tv|zattoo
+        )\.com
+        |(?:
+            tvonline\.ewe|nettv\.netcologne|tvplus\.m-net
+        )\.de
+        |(?:
+            player\.waly|www\.(?:1und1|netplus)
+        )\.tv
+        |www\.bbv-tv\.net
+        |www\.meinewelt\.cc
+    )/
+    (?:
+        (?:
+            recording(?:s\?recording=|/)
+            |
+            (?:ondemand/)?watch/[^/\s]+/[^/]+/
+        )(?P<recording_id>\d+)
+        |
+        (?:
+            (?:live/|watch/)|(?:channels(?:/\w+)?|guide)\?channel=
+        )(?P<channel>[^/\s]+)
+        |
+        ondemand(?:\?video=|/watch/)(?P<vod_id>[^-]+)
+    )
+""", re.VERBOSE))
 @pluginargument(
     "email",
     requires=["password"],
@@ -108,17 +103,16 @@ class Zattoo(Plugin):
         self.domain = self.match.group("base_url")
         self._session_attributes = Cache(
             filename="plugin-cache.json",
-            key_prefix=f"zattoo:attributes:{self.domain}",
-        )
+            key_prefix="zattoo:attributes:{0}".format(self.domain))
         self._uuid = self._session_attributes.get("uuid")
-        self._authed = (
-            self._session_attributes.get("power_guide_hash")
-            and self._uuid
-            and self.session.http.cookies.get("pzuid", domain=self.domain)
-            and self.session.http.cookies.get("beaker.session.id", domain=self.domain)
-        )
-        self._session_control = self._session_attributes.get("session_control", False)
-        self.base_url = f"https://{self.domain}"
+        self._authed = (self._session_attributes.get("power_guide_hash")
+                        and self._uuid
+                        and self.session.http.cookies.get("pzuid", domain=self.domain)
+                        and self.session.http.cookies.get("beaker.session.id", domain=self.domain)
+                        )
+        self._session_control = self._session_attributes.get("session_control",
+                                                             False)
+        self.base_url = "https://{0}".format(self.domain)
         self.headers = {
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
             "X-Requested-With": "XMLHttpRequest",
@@ -129,27 +123,24 @@ class Zattoo(Plugin):
         log.debug("_hello ...")
         app_token = self.session.http.get(
             f"{self.base_url}/token.json",
-            schema=validate.Schema(
-                validate.parse_json(),
-                {
-                    "success": bool,
-                    "session_token": str,
-                },
-                validate.get("session_token"),
-            ),
+            schema=validate.Schema(validate.parse_json(), {
+                "success": bool,
+                "session_token": str,
+            }, validate.get("session_token")),
         )
         if self._uuid:
-            uuid_data = self._uuid
+            __uuid = self._uuid
         else:
-            uuid_data = str(uuid.uuid4())
-            self._session_attributes.set("uuid", uuid_data, expires=self.TIME_SESSION)
+            __uuid = str(uuid.uuid4())
+            self._session_attributes.set(
+                "uuid", __uuid, expires=self.TIME_SESSION)
 
         params = {
             "app_version": "3.2120.1",
             "client_app_token": app_token,
             "format": "json",
             "lang": "en",
-            "uuid": uuid_data,
+            "uuid": __uuid,
         }
         res = self.session.http.post(
             f"{self.base_url}/zapi/v3/session/hello",
@@ -177,13 +168,10 @@ class Zattoo(Plugin):
                 "format": "json",
             },
             acceptable_status=(200, 400),
-            schema=validate.Schema(
-                validate.parse_json(),
-                validate.any(
-                    {"active": bool, "power_guide_hash": str},
-                    {"success": bool},
-                ),
-            ),
+            schema=validate.Schema(validate.parse_json(), validate.any(
+                {"active": bool, "power_guide_hash": str},
+                {"success": bool},
+            )),
         )
 
         if data.get("active"):
@@ -194,8 +182,11 @@ class Zattoo(Plugin):
 
         self._authed = data["active"]
         self.save_cookies(default_expires=self.TIME_SESSION)
-        self._session_attributes.set("power_guide_hash", data["power_guide_hash"], expires=self.TIME_SESSION)
-        self._session_attributes.set("session_control", True, expires=self.TIME_CONTROL)
+        self._session_attributes.set("power_guide_hash",
+                                     data["power_guide_hash"],
+                                     expires=self.TIME_SESSION)
+        self._session_attributes.set(
+            "session_control", True, expires=self.TIME_CONTROL)
 
     def _watch(self):
         log.debug("_watch ...")
@@ -211,10 +202,10 @@ class Zattoo(Plugin):
                 return
             params.update(params_cid)
         elif vod_id:
-            log.debug(f"Found vod_id: {vod_id}")
+            log.debug("Found vod_id: {0}".format(vod_id))
             watch_url = f"{self.base_url}/zapi/avod/videos/{vod_id}/watch"
         elif recording_id:
-            log.debug(f"Found recording_id: {recording_id}")
+            log.debug("Found recording_id: {0}".format(recording_id))
             watch_url = f"{self.base_url}/zapi/watch/recording/{recording_id}"
         else:
             log.debug("Missing watch_url")
@@ -230,29 +221,21 @@ class Zattoo(Plugin):
                 headers=self.headers,
                 data=params,
                 acceptable_status=(200, 402, 403, 404),
-                schema=validate.Schema(
-                    validate.parse_json(),
-                    validate.any(
-                        {
-                            "success": validate.transform(bool),
-                            "stream": {
-                                "watch_urls": [
-                                    {
-                                        "url": validate.url(),
-                                        validate.optional("maxrate"): int,
-                                        validate.optional("audio_channel"): str,
-                                    },
-                                ],
-                                validate.optional("quality"): str,
-                            },
-                        },
-                        {
-                            "success": validate.transform(bool),
-                            "internal_code": int,
-                            validate.optional("http_status"): int,
-                        },
-                    ),
-                ),
+                schema=validate.Schema(validate.parse_json(), validate.any({
+                    "success": validate.transform(bool),
+                    "stream": {
+                        "watch_urls": [{
+                            "url": validate.url(),
+                            validate.optional("maxrate"): int,
+                            validate.optional("audio_channel"): str,
+                        }],
+                        validate.optional("quality"): str,
+                    },
+                }, {
+                    "success": validate.transform(bool),
+                    "internal_code": int,
+                    validate.optional("http_status"): int,
+                })),
             )
 
             if not data["success"]:
@@ -264,7 +247,7 @@ class Zattoo(Plugin):
                     log.error("Paid subscription required for this channel.")
                     log.info("If paid subscription exist, use --zattoo-purge-credentials to start a new session.")
                 else:
-                    log.debug("unknown error %r", data)
+                    log.debug(f"unknown error {data!r}")
                     log.debug("Force session reset for watch_url")
                     self.reset_session()
                 continue
@@ -282,10 +265,10 @@ class Zattoo(Plugin):
                     yield from DASHStream.parse_manifest(self.session, url["url"]).items()
 
     def _get_params_cid(self, channel):
-        log.debug(f"get channel ID for {channel}")
+        log.debug("get channel ID for {0}".format(channel))
         try:
             res = self.session.http.get(
-                f"{self.base_url}/zapi/v2/cached/channels/{self._session_attributes.get('power_guide_hash')}",
+                f'{self.base_url}/zapi/v2/cached/channels/{self._session_attributes.get("power_guide_hash")}',
                 headers=self.headers,
                 params={"details": "False"},
             )
@@ -295,34 +278,25 @@ class Zattoo(Plugin):
             return False
 
         data = self.session.http.json(
-            res,
-            schema=validate.Schema(
-                {
-                    "success": validate.transform(bool),
-                    "channel_groups": [
+            res, schema=validate.Schema({
+                "success": validate.transform(bool),
+                "channel_groups": [{
+                    "channels": [
                         {
-                            "channels": [
-                                {
-                                    "display_alias": str,
-                                    "cid": str,
-                                    "qualities": [
-                                        {
-                                            "title": str,
-                                            "stream_types": validate.all(
-                                                [str],
-                                                validate.filter(
-                                                    lambda n: not re.match(r"(.+_(?:fairplay|playready|widevine))", n),
-                                                ),
-                                            ),
-                                            "level": str,
-                                            "availability": str,
-                                        },
-                                    ],
-                                },
-                            ],
+                            "display_alias": str,
+                            "cid": str,
+                            "qualities": [{
+                                "title": str,
+                                "stream_types": validate.all(
+                                    [str],
+                                    validate.filter(lambda n: not re.match(r"(.+_(?:fairplay|playready|widevine))", n)),
+                                ),
+                                "level": str,
+                                "availability": str,
+                            }],
                         },
                     ],
-                },
+                }]},
                 validate.get("channel_groups"),
             ),
         )
@@ -334,14 +308,15 @@ class Zattoo(Plugin):
             zattoo_list.append(c["display_alias"])
             if c["display_alias"] == channel:
                 cid = c["cid"]
-                log.debug("%r", c)
+                log.debug(f"{c!r}")
 
-        log.trace("Available zattoo channels in this country: %r", sorted(zattoo_list))
+        log.trace("Available zattoo channels in this country: {0}".format(
+            ", ".join(sorted(zattoo_list))))
 
         if not cid:
             cid = channel
 
-        log.debug(f"CHANNEL ID: {cid}")
+        log.debug("CHANNEL ID: {0}".format(cid))
         return {"cid": cid}
 
     def reset_session(self):
@@ -357,15 +332,17 @@ class Zattoo(Plugin):
         if self.options.get("purge_credentials"):
             self.reset_session()
             log.info("All credentials were successfully removed.")
-        elif self._authed and not self._session_control:
+        elif (self._authed and not self._session_control):
             # check every two hours, if the session is actually valid
-            log.debug(f"Session control for {self.domain}")
+            log.debug("Session control for {0}".format(self.domain))
             active = self.session.http.get(
                 f"{self.base_url}/zapi/v3/session",
-                schema=validate.Schema(validate.parse_json(), {"active": bool}, validate.get("active")),
+                schema=validate.Schema(validate.parse_json(),
+                                       {"active": bool}, validate.get("active")),
             )
             if active:
-                self._session_attributes.set("session_control", True, expires=self.TIME_CONTROL)
+                self._session_attributes.set(
+                    "session_control", True, expires=self.TIME_CONTROL)
                 log.debug("User is logged in")
             else:
                 log.debug("User is not logged in")

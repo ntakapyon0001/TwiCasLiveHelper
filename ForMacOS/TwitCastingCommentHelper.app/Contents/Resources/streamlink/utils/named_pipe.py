@@ -1,15 +1,14 @@
-from __future__ import annotations
-
 import abc
+import logging
 import os
 import random
 import tempfile
 import threading
 from contextlib import suppress
 from pathlib import Path
+from typing import Type
 
 from streamlink.compat import is_win32
-from streamlink.logger import getLogger
 
 
 try:
@@ -18,7 +17,7 @@ except ImportError:
     pass
 
 
-log = getLogger(__name__)
+log = logging.getLogger(__name__)
 
 _lock = threading.Lock()
 _id = 0
@@ -28,7 +27,7 @@ class NamedPipeBase(abc.ABC):
     path: Path
 
     def __init__(self):
-        global _id  # ruff: ignore[global-statement]
+        global _id  # noqa: PLW0603
         with _lock:
             _id += 1
             self.name = f"streamlinkpipe-{os.getpid()}-{_id}-{random.randint(0, 9999)}"
@@ -62,10 +61,10 @@ class NamedPipePosix(NamedPipeBase):
         os.mkfifo(self.path, self.permissions)
 
     def open(self):
-        self.fifo = self.path.open(self.mode)
+        self.fifo = open(self.path, self.mode)
 
     def write(self, data):
-        return self.fifo.write(data)  # type: ignore
+        return self.fifo.write(data)
 
     def close(self):
         try:
@@ -135,7 +134,7 @@ class NamedPipeWindows(NamedPipeBase):
             self.pipe = None
 
 
-NamedPipe: type[NamedPipeBase]
+NamedPipe: Type[NamedPipeBase]
 if not is_win32:
     NamedPipe = NamedPipePosix
 else:

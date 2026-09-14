@@ -1,47 +1,23 @@
-from __future__ import annotations
-
 import json
 import os
 import shutil
 import tempfile
-from atexit import register as _atexit_register
 from contextlib import suppress
-from copy import deepcopy
-from functools import wraps
+from datetime import datetime
 from pathlib import Path
-from threading import RLock, Timer
 from time import time
-from typing import TYPE_CHECKING, Any
+from typing import Any, Dict, Optional, Union
 
 from streamlink.compat import is_win32
-from streamlink.logger import getLogger
-
-
-if TYPE_CHECKING:
-    from datetime import datetime
 
 
 if is_win32:
-    xdg_cache = Path(os.environ.get("APPDATA") or Path.home())
+    xdg_cache = os.environ.get("APPDATA", os.path.expanduser("~"))
 else:
-    xdg_cache = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
+    xdg_cache = os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))
 
-# TODO: fix Windows and macOS paths, and deprecate old one (with fallback logic)
-CACHE_DIR = xdg_cache / "streamlink"
-
-WRITE_DEBOUNCE_TIME = 3.0
-
-
-log = getLogger(__name__)
-
-
-def _atomic(fn):
-    @wraps(fn)
-    def inner(self, *args, **kwargs):
-        with self._lock:
-            return fn(self, *args, **kwargs)
-
-    return inner
+# TODO: fix macOS path and deprecate old one (with fallback logic)
+CACHE_DIR = Path(xdg_cache) / "streamlink"
 
 
 # TODO: rewrite data structure
@@ -52,9 +28,8 @@ def _atomic(fn):
 class Cache:
     def __init__(
         self,
-        filename: str | Path,
+        filename: Union[str, Path],
         key_prefix: str = "",
-        disabled: bool = False,
     ):
         """
         Caches Python values as JSON and prunes expired entries.
@@ -66,38 +41,15 @@ class Cache:
         self.key_prefix = key_prefix
         self.filename = CACHE_DIR / Path(filename)
 
-        self._cache_orig: dict[str, dict[str, Any]] = {}
-        self._cache: dict[str, dict[str, Any]] = {}
-
-        self._loaded = self._disabled = bool(disabled)
-        self._lock = RLock()
-        self._timer: Timer | None = None
-
-        _atexit_register(self._save)
-
-    @property
-    def _dirty(self):
-        return self._cache != self._cache_orig
+        self._cache: Dict[str, Dict[str, Any]] = {}
 
     def _load(self):
-        if self._loaded:
-            return
-
-        self._loaded = True
-        self._cache_orig.clear()
-        self._cache.clear()
-
-        log.trace("Loading cache file: %s", self.filename)
-
-        try:
-            with self.filename.open("r", encoding="utf-8") as fd:
-                data = json.load(fd)
-                self._cache_orig.update(**data)
-                self._cache.update(**data)
-        except FileNotFoundError:
-            pass
-        except Exception as err:
-            log.warning("Failed loading cache file, continuing without cache: %s", err)
+        self._cache = {}
+        if self.filename.exists():
+            with suppress(Exception):
+                with self.filename.open("r") as fd:
+                    data = json.load(fd)
+                    self._cache.update(**data)
 
     def _prune(self):
         now = time()
@@ -113,51 +65,30 @@ class Cache:
 
         return len(pruned) > 0
 
-    def _schedule_save(self):
-        if self._timer:
-            self._timer.cancel()
-        if self._disabled or not self._dirty:
-            return
-
-        log.trace("Scheduling write to cache file: %.1fs", WRITE_DEBOUNCE_TIME)
-        self._timer = Timer(WRITE_DEBOUNCE_TIME, self._save)
-        self._timer.daemon = True
-        self._timer.name = "CacheSaveThread"
-        self._timer.start()
-
-    @_atomic
     def _save(self):
-        if self._timer:
-            self._timer.cancel()
-        if self._disabled or not self._dirty:
-            return
+        fd, tempname = tempfile.mkstemp()
+        fd = os.fdopen(fd, "w")
+        try:
+            json.dump(self._cache, fd, indent=2, separators=(",", ": "))
+        except Exception:
+            raise
+        finally:
+            fd.close()
 
-        log.trace("Writing to cache file: %s", self.filename)
-
-        fd = None
+        # Silently ignore errors
         try:
             self.filename.parent.mkdir(exist_ok=True, parents=True)
-            # TODO: py311 support end: set delete_on_close=False and move file in the context manager
-            with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", delete=False) as fd:
-                json.dump(self._cache, fd, indent=2, separators=(",", ": "))
-                fd.flush()
-            shutil.move(fd.name, self.filename)
-        except Exception as err:
-            if fd:
-                with suppress(OSError):
-                    Path(fd.name).unlink()
-            log.error("Error while writing to cache file: %s", err)
-        else:
-            self._cache_orig.clear()
-            self._cache_orig.update(**deepcopy(self._cache))
+            shutil.move(tempname, str(self.filename))
+        except OSError:
+            with suppress(Exception):
+                os.remove(tempname)
 
-    @_atomic
     def set(
         self,
         key: str,
         value: Any,
         expires: float = 60 * 60 * 24 * 7,
-        expires_at: datetime | None = None,
+        expires_at: Optional[datetime] = None,
     ) -> None:
         """
         Store the given value using the key name and expiration time.
@@ -185,13 +116,12 @@ class Cache:
                 expires = 0
 
         self._cache[key] = dict(value=value, expires=expires)
-        self._schedule_save()
+        self._save()
 
-    @_atomic
     def get(
         self,
         key: str,
-        default: Any | None = None,
+        default: Optional[Any] = None,
     ) -> Any:
         """
         Attempt to retrieve the given key from the cache.
@@ -204,8 +134,9 @@ class Cache:
         """
 
         self._load()
-        self._prune()
-        self._schedule_save()
+
+        if self._prune():
+            self._save()
 
         if self.key_prefix:
             key = f"{self.key_prefix}:{key}"
@@ -215,8 +146,7 @@ class Cache:
         else:
             return default
 
-    @_atomic
-    def get_all(self) -> dict[str, Any]:
+    def get_all(self) -> Dict[str, Any]:
         """
         Retrieve all cached key-value pairs.
 
@@ -226,10 +156,10 @@ class Cache:
         """
 
         ret = {}
-
         self._load()
-        self._prune()
-        self._schedule_save()
+
+        if self._prune():
+            self._save()
 
         for key, value in self._cache.items():
             if self.key_prefix:
@@ -237,7 +167,7 @@ class Cache:
             else:
                 prefix = ""
             if key.startswith(prefix):
-                okey = key[len(prefix) :]
+                okey = key[len(prefix):]
                 ret[okey] = value["value"]
 
         return ret

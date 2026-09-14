@@ -1,5 +1,4 @@
-from __future__ import annotations
-
+import logging
 import os
 import re
 import shlex
@@ -7,80 +6,34 @@ import subprocess
 import sys
 import warnings
 from contextlib import suppress
+from pathlib import Path
 from shutil import which
 from time import sleep
-from typing import TYPE_CHECKING, ClassVar, TextIO, cast
+from typing import ClassVar, Dict, List, Mapping, Optional, Sequence, TextIO, Tuple, Type, Union
 
 from streamlink.compat import is_win32
 from streamlink.exceptions import StreamlinkWarning
-from streamlink.logger import getLogger
+from streamlink.utils.named_pipe import NamedPipeBase
 from streamlink_cli.output.abc import Output
+from streamlink_cli.output.file import FileOutput
+from streamlink_cli.output.http import HTTPOutput
 from streamlink_cli.utils import Formatter
 
 
-if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
-    from pathlib import Path
-
-    from streamlink.utils.named_pipe import NamedPipeBase
-    from streamlink_cli.output.file import FileOutput
-    from streamlink_cli.output.http import HTTPOutput
+log = logging.getLogger("streamlink.cli.output")
 
 
-log = getLogger("streamlink.cli.output")
-
-
-class PlayerArgsMeta(type):
-    PLAYERS: ClassVar[list[type[PlayerArgs]]] = []
-
-    def __init__(cls, name, bases, attrs, **kwargs):
-        super().__init__(name, bases, attrs, **kwargs)
-        if attrs.get("NAME"):
-            cls.PLAYERS.append(cast("type[PlayerArgs]", cls))
-
-
-class PlayerArgs(metaclass=PlayerArgsMeta):
-    NAME: ClassVar[str] = ""
-    EXECUTABLE: ClassVar[re.Pattern | None] = None
-    FLATPAK: ClassVar[str | None] = None
-
-    def __new__(cls, path: Path, *_, args: str = "", **__):
-        executable = path.name.lower()
-        is_flatpak = False
-
-        if is_win32 and executable[-4:] == ".exe":
-            executable = executable[:-4]
-        elif (
-            path.name.lower() == "flatpak"
-            and args
-            and (parsed := shlex.split(args))
-            and (fp_idx := cls._get_flatpak_args_app_index(parsed))
-        ):
-            is_flatpak = True
-            executable = parsed[fp_idx]
-
-        playerargs = cls
-        for player in cls.PLAYERS:
-            if (
-                player.EXECUTABLE is not None
-                and player.EXECUTABLE.match(executable)
-                or is_flatpak
-                and player.FLATPAK is not None
-                and player.FLATPAK == executable
-            ):
-                playerargs = player
-                break
-
-        return super().__new__(playerargs)
+class PlayerArgs:
+    EXECUTABLES: ClassVar[List[re.Pattern]] = []
 
     def __init__(
         self,
         path: Path,
         args: str = "",
-        title: str | None = None,
-        filename: str | None = None,
-        namedpipe: NamedPipeBase | None = None,
-        http: HTTPOutput | None = None,
+        title: Optional[str] = None,
+        filename: Optional[str] = None,
+        namedpipe: Optional[NamedPipeBase] = None,
+        http: Optional[HTTPOutput] = None,
     ):
         self.path = path
         self.args = args
@@ -98,26 +51,7 @@ class PlayerArgs(metaclass=PlayerArgsMeta):
         else:
             self._input = self.get_stdin()
 
-    @classmethod
-    def get_player_names(cls) -> list[str]:
-        return sorted(
-            (p.NAME for p in cls.PLAYERS),
-            key=lambda s: s.lower(),
-        )
-
-    @staticmethod
-    def _get_flatpak_args_app_index(args: list[str]) -> int:
-        found_run_cmd = False
-
-        for i, arg in enumerate(args):
-            if not found_run_cmd and arg == "run":
-                found_run_cmd = True
-            elif found_run_cmd and not arg.startswith("-"):
-                return i
-
-        return 0
-
-    def build(self) -> list[str]:
+    def build(self) -> List[str]:
         args_title = []
         if self.title is not None:
             args_title.extend(self.get_title(self.title))
@@ -131,10 +65,7 @@ class PlayerArgs(metaclass=PlayerArgsMeta):
         args_tokenized = shlex.split(args)
 
         if not self._has_var_playertitleargs:
-            if self.path.name.lower() == "flatpak" and (fp_idx := self._get_flatpak_args_app_index(args_tokenized)):
-                args_tokenized = [*args_tokenized[: fp_idx + 1], *args_title, *args_tokenized[fp_idx + 1 :]]
-            else:
-                args_tokenized = [*args_title, *args_tokenized]
+            args_tokenized = [*args_title, *args_tokenized]
         if not self._has_var_playerinput:
             args_tokenized.append(self._input)
 
@@ -155,14 +86,14 @@ class PlayerArgs(metaclass=PlayerArgsMeta):
     def get_http(self, http: HTTPOutput) -> str:
         return http.url
 
-    def get_title(self, title: str) -> list[str]:
+    def get_title(self, title: str) -> List[str]:
         return []
 
 
 class PlayerArgsVLC(PlayerArgs):
-    NAME = "VLC"
-    EXECUTABLE = re.compile(r"^vlc$")
-    FLATPAK = "org.videolan.VLC"
+    EXECUTABLES: ClassVar[List[re.Pattern]] = [
+        re.compile(r"^vlc$", re.IGNORECASE),
+    ]
 
     def get_namedpipe(self, namedpipe: NamedPipeBase) -> str:
         if is_win32:
@@ -170,16 +101,18 @@ class PlayerArgsVLC(PlayerArgs):
 
         return super().get_namedpipe(namedpipe)
 
-    def get_title(self, title) -> list[str]:
-        title = title.replace("$", "$$")
+    def get_title(self, title) -> List[str]:
+        # allow escaping with \$: see https://wiki.videolan.org/Documentation:Format_String/
+        # TODO: remove this feature
+        title = title.replace("$", "$$").replace(r"\$$", "$")
 
         return ["--input-title-format", title]
 
 
 class PlayerArgsMPV(PlayerArgs):
-    NAME = "mpv"
-    EXECUTABLE = re.compile(r"^mpv$")
-    FLATPAK = "io.mpv.Mpv"
+    EXECUTABLES: ClassVar[List[re.Pattern]] = [
+        re.compile(r"^mpv$", re.IGNORECASE),
+    ]
 
     def get_namedpipe(self, namedpipe: NamedPipeBase) -> str:
         if is_win32:
@@ -187,15 +120,16 @@ class PlayerArgsMPV(PlayerArgs):
 
         return super().get_namedpipe(namedpipe)
 
-    def get_title(self, title: str) -> list[str]:
+    def get_title(self, title: str) -> List[str]:
         return [f"--force-media-title={title}"]
 
 
 class PlayerArgsPotplayer(PlayerArgs):
-    NAME = "PotPlayer"
-    EXECUTABLE = re.compile(r"^potplayer(?:mini(?:64)?)?$")
+    EXECUTABLES: ClassVar[List[re.Pattern]] = [
+        re.compile(r"^potplayer(?:mini(?:64)?)?$", re.IGNORECASE),
+    ]
 
-    def get_title(self, title: str) -> list[str]:
+    def get_title(self, title: str) -> List[str]:
         if self._input != "-":
             # PotPlayer CLI help:
             # "You can specify titles for URLs by separating them with a backslash (\) at the end of URLs."
@@ -210,25 +144,30 @@ class PlayerOutput(Output):
     PLAYER_ARGS_INPUT = "playerinput"
     PLAYER_ARGS_TITLE = "playertitleargs"
 
-    playerargs: PlayerArgs
+    PLAYERS: ClassVar[Dict[str, Type[PlayerArgs]]] = {
+        "vlc": PlayerArgsVLC,
+        "mpv": PlayerArgsMPV,
+        "potplayer": PlayerArgsPotplayer,
+    }
+
     player: subprocess.Popen
-    stdin: int | TextIO
-    stdout: int | TextIO
-    stderr: int | TextIO
+    stdin: Union[int, TextIO]
+    stdout: Union[int, TextIO]
+    stderr: Union[int, TextIO]
 
     def __init__(
         self,
         path: Path,
         args: str = "",
-        env: Sequence[tuple[str, str]] | None = None,
+        env: Optional[Sequence[Tuple[str, str]]] = None,
         quiet: bool = True,
         kill: bool = True,
         call: bool = False,
-        filename: str | None = None,
-        namedpipe: NamedPipeBase | None = None,
-        http: HTTPOutput | None = None,
-        record: FileOutput | None = None,
-        title: str | None = None,
+        filename: Optional[str] = None,
+        namedpipe: Optional[NamedPipeBase] = None,
+        http: Optional[HTTPOutput] = None,
+        record: Optional[FileOutput] = None,
+        title: Optional[str] = None,
     ):
         super().__init__()
 
@@ -240,7 +179,6 @@ class PlayerOutput(Output):
         self.call = call
         self.quiet = quiet
 
-        self.player = None  # type: ignore[assignment, ty:invalid-assignment]
         self.filename = filename
         self.namedpipe = namedpipe
         self.http = http
@@ -248,7 +186,7 @@ class PlayerOutput(Output):
 
         self.title = title
 
-        self.playerargs = PlayerArgs(
+        self.playerargs = self.playerargsfactory(
             path=path,
             args=args,
             title=title,
@@ -269,6 +207,19 @@ class PlayerOutput(Output):
             self.stdout = sys.stdout
             self.stderr = sys.stderr
 
+    @classmethod
+    def playerargsfactory(cls, path: Path, **kwargs) -> PlayerArgs:
+        executable = path.name
+        if is_win32 and executable[-4:].lower() == ".exe":
+            executable = executable[:-4]
+
+        for playerclass in cls.PLAYERS.values():
+            for re_executable in playerclass.EXECUTABLES:
+                if re_executable.search(executable):
+                    return playerclass(path=path, **kwargs)
+
+        return PlayerArgs(path=path, **kwargs)
+
     @property
     def running(self):
         sleep(0.5)
@@ -278,10 +229,9 @@ class PlayerOutput(Output):
         args = self.playerargs.build()
 
         playerpath = args[0]
-        if resolved := which(playerpath):
-            args[0] = resolved
-        else:
-            if playerpath[:1] in ('"', "'"):
+        args[0] = which(playerpath)
+        if not args[0]:
+            if playerpath[:1] in ("\"", "'"):
                 warnings.warn(
                     "\n".join([
                         "The --player argument has been changed and now only takes player path values:",
@@ -304,11 +254,8 @@ class PlayerOutput(Output):
         else:
             self._open_subprocess(args)
 
-    def _open_call(self, args: list[str]):
-        if self.env:
-            log.debug("Calling: %r, env: %r", args, self.env)
-        else:
-            log.debug("Calling: %r", args)
+    def _open_call(self, args: List[str]):
+        log.debug(f"Calling: {args!r}{f', env: {self.env!r}' if self.env else ''}")
 
         environ = dict(os.environ)
         environ.update(self.env)
@@ -320,11 +267,8 @@ class PlayerOutput(Output):
             stderr=self.stderr,
         )
 
-    def _open_subprocess(self, args: list[str]):
-        if self.env:
-            log.debug("Opening subprocess: %r, env: %r", args, self.env)
-        else:
-            log.debug("Opening subprocess: %r", args)
+    def _open_subprocess(self, args: List[str]):
+        log.debug(f"Opening subprocess: {args!r}{f', env: {self.env!r}' if self.env else ''}")
 
         environ = dict(os.environ)
         environ.update(self.env)
@@ -349,21 +293,16 @@ class PlayerOutput(Output):
             self.http.accept_connection()
             self.http.open()
 
-    def close(self):
-        # Close input to the player first to signal the end of the stream and allow the player to terminate on its own.
-        # Always close the player input, regardless whether the player was not launched yet
+    def _close(self):
+        # Close input to the player first to signal the end of the
+        # stream and allow the player to terminate of its own accord
         if self.namedpipe:
             self.namedpipe.close()
-            self.namedpipe = None
         elif self.http:
             self.http.shutdown()
-            self.http = None
-        elif not self.filename and self.player and self.player.stdin:  # pragma: no branch
+        elif not self.filename:
             self.player.stdin.close()
 
-        super().close()
-
-    def _close(self):
         if self.record:
             self.record.close()
 
@@ -388,5 +327,5 @@ class PlayerOutput(Output):
             self.namedpipe.write(data)
         elif self.http:
             self.http.write(data)
-        elif self.player.stdin:  # pragma: no branch
+        else:
             self.player.stdin.write(data)

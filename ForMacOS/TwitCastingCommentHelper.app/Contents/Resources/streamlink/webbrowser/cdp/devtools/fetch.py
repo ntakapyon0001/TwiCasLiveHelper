@@ -3,27 +3,24 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all modules.
 #
-# CDP version: v0.0.1510116
+# CDP version: v0.0.1359167
 # CDP domain: Fetch
 
 from __future__ import annotations
 
 import enum
-from collections.abc import Generator
+import typing
 from dataclasses import dataclass
-from typing import Any
 
 import streamlink.webbrowser.cdp.devtools.io as io
 import streamlink.webbrowser.cdp.devtools.network as network
 import streamlink.webbrowser.cdp.devtools.page as page
-from streamlink.webbrowser.cdp.devtools.util import T_JSON_DICT, CDPEvent
+from streamlink.webbrowser.cdp.devtools.util import T_JSON_DICT, event_class
 
 
 class RequestId(str):
     """
     Unique request identifier.
-    Note that this does not identify individual HTTP requests that are part of
-    a network request.
     """
     def to_json(self) -> str:
         return self
@@ -57,13 +54,13 @@ class RequestStage(enum.Enum):
 class RequestPattern:
     #: Wildcards (``'*'`` -> zero or more, ``'?'`` -> exactly one) are allowed. Escape character is
     #: backslash. Omitting is equivalent to ``"*"``.
-    url_pattern: str | None = None
+    url_pattern: typing.Optional[str] = None
 
     #: If set, only requests for matching resource types will be intercepted.
-    resource_type: network.ResourceType | None = None
+    resource_type: typing.Optional[network.ResourceType] = None
 
     #: Stage at which to begin intercepting requests. Default is Request.
-    request_stage: RequestStage | None = None
+    request_stage: typing.Optional[RequestStage] = None
 
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = {}
@@ -122,7 +119,7 @@ class AuthChallenge:
     realm: str
 
     #: Source of the authentication challenge.
-    source: str | None = None
+    source: typing.Optional[str] = None
 
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = {}
@@ -155,11 +152,11 @@ class AuthChallengeResponse:
 
     #: The username to provide, possibly empty. Should only be set if response is
     #: ProvideCredentials.
-    username: str | None = None
+    username: typing.Optional[str] = None
 
     #: The password to provide, possibly empty. Should only be set if response is
     #: ProvideCredentials.
-    password: str | None = None
+    password: typing.Optional[str] = None
 
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = {}
@@ -179,7 +176,7 @@ class AuthChallengeResponse:
         )
 
 
-def disable() -> Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
     """
     Disables the fetch domain.
     """
@@ -190,9 +187,9 @@ def disable() -> Generator[T_JSON_DICT, T_JSON_DICT, None]:
 
 
 def enable(
-    patterns: list[RequestPattern] | None = None,
-    handle_auth_requests: bool | None = None,
-) -> Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    patterns: typing.Optional[typing.List[RequestPattern]] = None,
+    handle_auth_requests: typing.Optional[bool] = None,
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
     """
     Enables issuing of requestPaused events. A request will be paused until client
     calls one of failRequest, fulfillRequest or continueRequest/continueWithAuth.
@@ -215,7 +212,7 @@ def enable(
 def fail_request(
     request_id: RequestId,
     error_reason: network.ErrorReason,
-) -> Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
     """
     Causes the request to fail with specified reason.
 
@@ -235,11 +232,11 @@ def fail_request(
 def fulfill_request(
     request_id: RequestId,
     response_code: int,
-    response_headers: list[HeaderEntry] | None = None,
-    binary_response_headers: str | None = None,
-    body: str | None = None,
-    response_phrase: str | None = None,
-) -> Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    response_headers: typing.Optional[typing.List[HeaderEntry]] = None,
+    binary_response_headers: typing.Optional[str] = None,
+    body: typing.Optional[str] = None,
+    response_phrase: typing.Optional[str] = None,
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
     """
     Provides response to the request.
 
@@ -270,12 +267,12 @@ def fulfill_request(
 
 def continue_request(
     request_id: RequestId,
-    url: str | None = None,
-    method: str | None = None,
-    post_data: str | None = None,
-    headers: list[HeaderEntry] | None = None,
-    intercept_response: bool | None = None,
-) -> Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    url: typing.Optional[str] = None,
+    method: typing.Optional[str] = None,
+    post_data: typing.Optional[str] = None,
+    headers: typing.Optional[typing.List[HeaderEntry]] = None,
+    intercept_response: typing.Optional[bool] = None,
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
     """
     Continues the request, optionally modifying some of its parameters.
 
@@ -308,7 +305,7 @@ def continue_request(
 def continue_with_auth(
     request_id: RequestId,
     auth_challenge_response: AuthChallengeResponse,
-) -> Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
     """
     Continues a request supplying authChallengeResponse following authRequired event.
 
@@ -327,11 +324,11 @@ def continue_with_auth(
 
 def continue_response(
     request_id: RequestId,
-    response_code: int | None = None,
-    response_phrase: str | None = None,
-    response_headers: list[HeaderEntry] | None = None,
-    binary_response_headers: str | None = None,
-) -> Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    response_code: typing.Optional[int] = None,
+    response_phrase: typing.Optional[str] = None,
+    response_headers: typing.Optional[typing.List[HeaderEntry]] = None,
+    binary_response_headers: typing.Optional[str] = None,
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
     """
     Continues loading of the paused response, optionally modifying the
     response headers. If either responseCode or headers are modified, all of them
@@ -364,7 +361,7 @@ def continue_response(
 
 def get_response_body(
     request_id: RequestId,
-) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[str, bool]]:
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.Tuple[str, bool]]:
     """
     Causes the body of the response to be received from the server and
     returned as a single string. May only be issued for a request that
@@ -398,7 +395,7 @@ def get_response_body(
 
 def take_response_body_as_stream(
     request_id: RequestId,
-) -> Generator[T_JSON_DICT, T_JSON_DICT, io.StreamHandle]:
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, io.StreamHandle]:
     """
     Returns a handle to the stream representing the response body.
     The request must be paused in the HeadersReceived stage.
@@ -424,8 +421,9 @@ def take_response_body_as_stream(
     return io.StreamHandle.from_json(json["stream"])
 
 
+@event_class("Fetch.requestPaused")
 @dataclass
-class RequestPaused(CDPEvent, event="Fetch.requestPaused"):
+class RequestPaused:
     """
     Issued when the domain is enabled and the request URL matches the
     specified filter. The request is paused until the client responds
@@ -448,19 +446,19 @@ class RequestPaused(CDPEvent, event="Fetch.requestPaused"):
     #: How the requested resource will be used.
     resource_type: network.ResourceType
     #: Response error if intercepted at response stage.
-    response_error_reason: network.ErrorReason | None
+    response_error_reason: typing.Optional[network.ErrorReason]
     #: Response code if intercepted at response stage.
-    response_status_code: int | None
+    response_status_code: typing.Optional[int]
     #: Response status text if intercepted at response stage.
-    response_status_text: str | None
+    response_status_text: typing.Optional[str]
     #: Response headers if intercepted at the response stage.
-    response_headers: list[HeaderEntry] | None
+    response_headers: typing.Optional[typing.List[HeaderEntry]]
     #: If the intercepted request had a corresponding Network.requestWillBeSent event fired for it,
     #: then this networkId will be the same as the requestId present in the requestWillBeSent event.
-    network_id: network.RequestId | None
+    network_id: typing.Optional[network.RequestId]
     #: If the request is due to a redirect response from the server, the id of the request that
     #: has caused the redirect.
-    redirected_request_id: RequestId | None
+    redirected_request_id: typing.Optional[RequestId]
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> RequestPaused:
@@ -478,8 +476,9 @@ class RequestPaused(CDPEvent, event="Fetch.requestPaused"):
         )
 
 
+@event_class("Fetch.authRequired")
 @dataclass
-class AuthRequired(CDPEvent, event="Fetch.authRequired"):
+class AuthRequired:
     """
     Issued when the domain is enabled with handleAuthRequests set to true.
     The request is paused until client responds with continueWithAuth.

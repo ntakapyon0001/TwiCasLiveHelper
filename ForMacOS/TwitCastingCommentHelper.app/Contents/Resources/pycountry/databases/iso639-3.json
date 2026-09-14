@@ -1163,6 +1163,13 @@
       "type": "L"
     },
     {
+      "alpha_3": "ajp",
+      "inverted_name": "Arabic, South Levantine",
+      "name": "South Levantine Arabic",
+      "scope": "I",
+      "type": "L"
+    },
+    {
       "alpha_3": "ajs",
       "name": "Algerian Jewish Sign Language",
       "scope": "I",
@@ -1253,7 +1260,7 @@
       "alpha_3": "akk",
       "name": "Akkadian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "akl",
@@ -1915,8 +1922,8 @@
     },
     {
       "alpha_3": "apc",
-      "inverted_name": "Arabic, Levantine",
-      "name": "Levantine Arabic",
+      "inverted_name": "Arabic, North Levantine",
+      "name": "North Levantine Arabic",
       "scope": "I",
       "type": "L"
     },
@@ -2146,7 +2153,7 @@
       "inverted_name": "Aramaic, Official (700-300 BCE)",
       "name": "Official Aramaic (700-300 BCE)",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "ard",
@@ -2736,7 +2743,7 @@
       "alpha_3": "ave",
       "name": "Avestan",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "avi",
@@ -5610,7 +5617,7 @@
     },
     {
       "alpha_3": "bql",
-      "name": "Karian",
+      "name": "Bilakura",
       "scope": "I",
       "type": "L"
     },
@@ -7682,7 +7689,7 @@
       "inverted_name": "Slavic, Church",
       "name": "Church Slavic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_2": "cv",
@@ -8023,7 +8030,7 @@
     },
     {
       "alpha_3": "clm",
-      "name": "Klallam",
+      "name": "Clallam",
       "scope": "I",
       "type": "L"
     },
@@ -8033,12 +8040,6 @@
       "name": "Lowland Oaxaca Chontal",
       "scope": "I",
       "type": "L"
-    },
-    {
-      "alpha_3": "cls",
-      "name": "Classical Sanskrit",
-      "scope": "I",
-      "type": "H"
     },
     {
       "alpha_3": "clt",
@@ -8128,7 +8129,7 @@
       "alpha_3": "cms",
       "name": "Messapic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "cmt",
@@ -9062,12 +9063,6 @@
       "type": "L"
     },
     {
-      "alpha_3": "cxh",
-      "name": "Cha'ari",
-      "scope": "I",
-      "type": "L"
-    },
-    {
       "alpha_3": "cya",
       "inverted_name": "Chatino, Nopala",
       "name": "Nopala Chatino",
@@ -9255,7 +9250,7 @@
     },
     {
       "alpha_3": "daz",
-      "name": "Moi-Wadea",
+      "name": "Dao",
       "scope": "I",
       "type": "L"
     },
@@ -9506,6 +9501,12 @@
       "type": "L"
     },
     {
+      "alpha_3": "dek",
+      "name": "Dek",
+      "scope": "I",
+      "type": "L"
+    },
+    {
       "alpha_3": "del",
       "name": "Delaware",
       "scope": "M",
@@ -9646,7 +9647,7 @@
     },
     {
       "alpha_3": "dgr",
-      "name": "Tlicho",
+      "name": "Dogrib",
       "scope": "I",
       "type": "L"
     },
@@ -9879,7 +9880,7 @@
     {
       "alpha_2": "dv",
       "alpha_3": "div",
-      "name": "Divehi",
+      "name": "Dhivehi",
       "scope": "I",
       "type": "L"
     },
@@ -10511,12 +10512,6 @@
       "type": "L"
     },
     {
-      "alpha_3": "dsk",
-      "name": "Dokshi",
-      "scope": "I",
-      "type": "L"
-    },
-    {
       "alpha_3": "dsl",
       "name": "Danish Sign Language",
       "scope": "I",
@@ -10896,12 +10891,6 @@
       "type": "L"
     },
     {
-      "alpha_3": "dyr",
-      "name": "Dyarim",
-      "scope": "I",
-      "type": "L"
-    },
-    {
       "alpha_3": "dyu",
       "name": "Dyula",
       "scope": "I",
@@ -10916,12 +10905,6 @@
     {
       "alpha_3": "dza",
       "name": "Tunzu",
-      "scope": "I",
-      "type": "L"
-    },
-    {
-      "alpha_3": "dzd",
-      "name": "Daza",
       "scope": "I",
       "type": "L"
     },
@@ -11003,7 +10986,7 @@
       "alpha_3": "ecr",
       "name": "Eteocretan",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "ecs",
@@ -11015,7 +10998,7 @@
       "alpha_3": "ecy",
       "name": "Eteocypriot",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "eee",
@@ -11069,7 +11052,7 @@
       "alpha_3": "egy",
       "name": "Egyptian (Ancient)",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "ehs",
@@ -11230,7 +11213,7 @@
       "alpha_3": "elx",
       "name": "Elamite",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "ema",
@@ -11327,7 +11310,7 @@
       "inverted_name": "Mayan, Epigraphic",
       "name": "Epigraphic Mayan",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "emz",
@@ -11657,7 +11640,7 @@
       "alpha_3": "ett",
       "name": "Etruscan",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "etu",
@@ -11676,12 +11659,6 @@
       "name": "Semimi",
       "scope": "I",
       "type": "L"
-    },
-    {
-      "alpha_3": "eud",
-      "name": "Eudeve",
-      "scope": "I",
-      "type": "E"
     },
     {
       "alpha_2": "eu",
@@ -12943,7 +12920,7 @@
       "alpha_3": "gez",
       "name": "Geez",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "gfk",
@@ -13067,7 +13044,7 @@
       "alpha_3": "gho",
       "name": "Ghomara",
       "scope": "I",
-      "type": "L"
+      "type": "E"
     },
     {
       "alpha_3": "ghr",
@@ -13473,7 +13450,7 @@
       "inverted_name": "Greek, Mycenaean",
       "name": "Mycenaean Greek",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "gmz",
@@ -13723,7 +13700,7 @@
       "alpha_3": "got",
       "name": "Gothic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "gou",
@@ -14447,7 +14424,7 @@
     },
     {
       "alpha_3": "haa",
-      "name": "Hän",
+      "name": "Han",
       "scope": "I",
       "type": "L"
     },
@@ -14841,7 +14818,7 @@
       "alpha_3": "hit",
       "name": "Hittite",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "hiw",
@@ -14933,7 +14910,7 @@
       "inverted_name": "Luwian, Hieroglyphic",
       "name": "Hieroglyphic Luwian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "hma",
@@ -15007,7 +14984,7 @@
       "alpha_3": "hmk",
       "name": "Maek",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "hml",
@@ -15141,12 +15118,6 @@
     {
       "alpha_3": "hnj",
       "name": "Hmong Njua",
-      "scope": "I",
-      "type": "L"
-    },
-    {
-      "alpha_3": "hnm",
-      "name": "Hainanese",
       "scope": "I",
       "type": "L"
     },
@@ -15444,7 +15415,7 @@
       "inverted_name": "Hittite, Middle",
       "name": "Middle Hittite",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "hub",
@@ -16047,12 +16018,6 @@
       "type": "L"
     },
     {
-      "alpha_3": "ikh",
-      "name": "Ikhin-Arokho",
-      "scope": "I",
-      "type": "L"
-    },
-    {
       "alpha_3": "iki",
       "name": "Iko",
       "scope": "I",
@@ -16245,7 +16210,7 @@
       "alpha_3": "ims",
       "name": "Marsian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "imt",
@@ -16257,7 +16222,7 @@
       "alpha_3": "imy",
       "name": "Milyan",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_2": "ia",
@@ -16308,7 +16273,7 @@
       "alpha_3": "inm",
       "name": "Minaean",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "inn",
@@ -16542,12 +16507,6 @@
       "type": "L"
     },
     {
-      "alpha_3": "isv",
-      "name": "Interslavic",
-      "scope": "I",
-      "type": "C"
-    },
-    {
       "alpha_2": "it",
       "alpha_3": "ita",
       "name": "Italian",
@@ -16732,12 +16691,6 @@
     {
       "alpha_3": "izh",
       "name": "Ingrian",
-      "scope": "I",
-      "type": "L"
-    },
-    {
-      "alpha_3": "izm",
-      "name": "Kizamani",
       "scope": "I",
       "type": "L"
     },
@@ -17465,7 +17418,7 @@
       "alpha_3": "juc",
       "name": "Jurchen",
       "scope": "I",
-      "type": "H"
+      "type": "E"
     },
     {
       "alpha_3": "jud",
@@ -17731,7 +17684,7 @@
       "alpha_3": "kaw",
       "name": "Kawi",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "kax",
@@ -17955,7 +17908,7 @@
     },
     {
       "alpha_3": "kci",
-      "name": "Ngyian",
+      "name": "Kamantan",
       "scope": "I",
       "type": "L"
     },
@@ -18568,6 +18521,12 @@
       "type": "E"
     },
     {
+      "alpha_3": "kgm",
+      "name": "Karipúna",
+      "scope": "I",
+      "type": "E"
+    },
+    {
       "alpha_3": "kgn",
       "name": "Karingani",
       "scope": "I",
@@ -18725,7 +18684,7 @@
       "alpha_3": "kho",
       "name": "Khotanese",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "khp",
@@ -20270,7 +20229,7 @@
     },
     {
       "alpha_3": "krp",
-      "name": "Durop",
+      "name": "Korop",
       "scope": "I",
       "type": "L"
     },
@@ -20328,6 +20287,12 @@
       "alpha_3": "krz",
       "inverted_name": "Kanum, Sota",
       "name": "Sota Kanum",
+      "scope": "I",
+      "type": "L"
+    },
+    {
+      "alpha_3": "ksa",
+      "name": "Shuwa-Zamani",
       "scope": "I",
       "type": "L"
     },
@@ -21016,7 +20981,7 @@
     },
     {
       "alpha_3": "kwk",
-      "name": "Kwak'wala",
+      "name": "Kwakiutl",
       "scope": "I",
       "type": "L"
     },
@@ -21557,7 +21522,7 @@
       "alpha_3": "lab",
       "name": "Linear A",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "lac",
@@ -21585,7 +21550,7 @@
     },
     {
       "alpha_3": "lag",
-      "name": "Rangi",
+      "name": "Langi",
       "scope": "I",
       "type": "L"
     },
@@ -21661,7 +21626,7 @@
       "alpha_3": "lat",
       "name": "Latin",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "lau",
@@ -22212,12 +22177,6 @@
     {
       "alpha_3": "lgr",
       "name": "Lengo",
-      "scope": "I",
-      "type": "L"
-    },
-    {
-      "alpha_3": "lgs",
-      "name": "Guinea-Bissau Sign Language",
       "scope": "I",
       "type": "L"
     },
@@ -22872,7 +22831,7 @@
       "alpha_3": "lng",
       "name": "Langobardic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "lnh",
@@ -22973,7 +22932,7 @@
     },
     {
       "alpha_3": "loh",
-      "name": "Laarim",
+      "name": "Narim",
       "scope": "I",
       "type": "L"
     },
@@ -23421,13 +23380,6 @@
       "type": "L"
     },
     {
-      "alpha_3": "luh",
-      "inverted_name": "Chinese, Leizhou",
-      "name": "Leizhou Chinese",
-      "scope": "I",
-      "type": "L"
-    },
-    {
       "alpha_3": "lui",
       "name": "Luiseno",
       "scope": "I",
@@ -23497,7 +23449,7 @@
       "alpha_3": "lut",
       "name": "Lushootseed",
       "scope": "I",
-      "type": "E"
+      "type": "L"
     },
     {
       "alpha_3": "luu",
@@ -23545,12 +23497,6 @@
     {
       "alpha_3": "lvk",
       "name": "Lavukaleve",
-      "scope": "I",
-      "type": "L"
-    },
-    {
-      "alpha_3": "lvl",
-      "name": "Lwel",
       "scope": "I",
       "type": "L"
     },
@@ -24830,7 +24776,7 @@
     },
     {
       "alpha_3": "mhn",
-      "name": "Mòcheno",
+      "name": "Mócheno",
       "scope": "I",
       "type": "L"
     },
@@ -25570,7 +25516,7 @@
     },
     {
       "alpha_3": "mmi",
-      "name": "Hember Avu",
+      "name": "Musar",
       "scope": "I",
       "type": "L"
     },
@@ -28249,7 +28195,7 @@
       "inverted_name": "Hittite, Neo-",
       "name": "Neo-Hittite",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "nej",
@@ -28328,8 +28274,7 @@
     },
     {
       "alpha_3": "new",
-      "inverted_name": "Bhasa, Nepal",
-      "name": "Nepal Bhasa",
+      "name": "Newari",
       "scope": "I",
       "type": "L"
     },
@@ -29586,6 +29531,12 @@
       "type": "E"
     },
     {
+      "alpha_3": "nom",
+      "name": "Nocamán",
+      "scope": "I",
+      "type": "E"
+    },
+    {
       "alpha_3": "non",
       "inverted_name": "Norse, Old",
       "name": "Old Norse",
@@ -29805,7 +29756,7 @@
       "alpha_3": "nrc",
       "name": "Noric",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "nre",
@@ -29862,7 +29813,7 @@
       "inverted_name": "Picene, North",
       "name": "North Picene",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "nrr",
@@ -30057,6 +30008,12 @@
       "alpha_3": "ntd",
       "inverted_name": "Tidung, Northern",
       "name": "Northern Tidung",
+      "scope": "I",
+      "type": "L"
+    },
+    {
+      "alpha_3": "nte",
+      "name": "Nathembo",
       "scope": "I",
       "type": "L"
     },
@@ -30433,7 +30390,7 @@
       "alpha_3": "nxm",
       "name": "Numidian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "nxn",
@@ -30468,7 +30425,7 @@
     {
       "alpha_2": "ny",
       "alpha_3": "nya",
-      "name": "Chichewa",
+      "name": "Nyanja",
       "scope": "I",
       "type": "L"
     },
@@ -30655,12 +30612,6 @@
       "type": "L"
     },
     {
-      "alpha_3": "nzr",
-      "name": "Dir-Nyamzak-Mbarimi",
-      "scope": "I",
-      "type": "L"
-    },
-    {
       "alpha_3": "nzs",
       "name": "New Zealand Sign Language",
       "scope": "I",
@@ -30698,17 +30649,11 @@
       "type": "L"
     },
     {
-      "alpha_3": "oak",
-      "name": "Noakhali",
-      "scope": "I",
-      "type": "L"
-    },
-    {
       "alpha_3": "oar",
       "inverted_name": "Aramaic, Old (up to 700 BCE)",
       "name": "Old Aramaic (up to 700 BCE)",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "oav",
@@ -30740,7 +30685,7 @@
       "alpha_3": "obm",
       "name": "Moabite",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "obo",
@@ -30780,7 +30725,7 @@
       "inverted_name": "Chinese, Old",
       "name": "Old Chinese",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_2": "oc",
@@ -30896,7 +30841,7 @@
       "inverted_name": "Hittite, Old",
       "name": "Old Hittite",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "ohu",
@@ -31206,7 +31151,7 @@
       "alpha_3": "omn",
       "name": "Minoan",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "omo",
@@ -31389,7 +31334,7 @@
       "inverted_name": "Ossetic, Old",
       "name": "Old Ossetic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "opa",
@@ -31549,7 +31494,7 @@
       "alpha_3": "osc",
       "name": "Oscan",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "osi",
@@ -31716,7 +31661,7 @@
       "inverted_name": "Tamil, Old",
       "name": "Old Tamil",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "otz",
@@ -31863,7 +31808,7 @@
       "alpha_3": "pal",
       "name": "Pahlavi",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "pam",
@@ -32384,13 +32329,13 @@
       "inverted_name": "Irish, Primitive",
       "name": "Primitive Irish",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "pgn",
       "name": "Paelignian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "pgs",
@@ -32462,7 +32407,7 @@
       "alpha_3": "phn",
       "name": "Phoenician",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "pho",
@@ -32667,7 +32612,7 @@
       "alpha_3": "pkc",
       "name": "Paekche",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "pkg",
@@ -32772,7 +32717,13 @@
       "alpha_3": "pli",
       "name": "Pali",
       "scope": "I",
-      "type": "H"
+      "type": "A"
+    },
+    {
+      "alpha_3": "plj",
+      "name": "Polci",
+      "scope": "I",
+      "type": "L"
     },
     {
       "alpha_3": "plk",
@@ -32805,7 +32756,7 @@
       "alpha_3": "plq",
       "name": "Palaic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "plr",
@@ -32910,6 +32861,12 @@
       "name": "Southern Pumi",
       "scope": "I",
       "type": "L"
+    },
+    {
+      "alpha_3": "pmk",
+      "name": "Pamlico",
+      "scope": "I",
+      "type": "E"
     },
     {
       "alpha_3": "pml",
@@ -33430,6 +33387,12 @@
       "type": "H"
     },
     {
+      "alpha_3": "prp",
+      "name": "Parsi",
+      "scope": "I",
+      "type": "L"
+    },
+    {
       "alpha_3": "prq",
       "name": "Ashéninka Perené",
       "scope": "I",
@@ -33895,17 +33858,11 @@
       "alpha_3": "pyx",
       "name": "Pyu (Myanmar)",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "pyy",
       "name": "Pyen",
-      "scope": "I",
-      "type": "L"
-    },
-    {
-      "alpha_3": "pze",
-      "name": "Pesse",
       "scope": "I",
       "type": "L"
     },
@@ -33917,7 +33874,6 @@
     },
     {
       "alpha_3": "pzn",
-      "inverted_name": "Naga, Jejara",
       "name": "Jejara Naga",
       "scope": "I",
       "type": "L"
@@ -35070,12 +35026,6 @@
       "type": "L"
     },
     {
-      "alpha_3": "rrm",
-      "name": "Moriori",
-      "scope": "I",
-      "type": "E"
-    },
-    {
       "alpha_3": "rro",
       "name": "Waima",
       "scope": "I",
@@ -35114,12 +35064,6 @@
     {
       "alpha_3": "rsn",
       "name": "Rwandan Sign Language",
-      "scope": "I",
-      "type": "L"
-    },
-    {
-      "alpha_3": "rsw",
-      "name": "Rishiwa",
       "scope": "I",
       "type": "L"
     },
@@ -35408,8 +35352,8 @@
       "alpha_2": "sa",
       "alpha_3": "san",
       "name": "Sanskrit",
-      "scope": "M",
-      "type": "H"
+      "scope": "I",
+      "type": "A"
     },
     {
       "alpha_3": "sao",
@@ -35611,7 +35555,7 @@
       "alpha_3": "sbv",
       "name": "Sabine",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "sbw",
@@ -35747,7 +35691,7 @@
       "alpha_3": "scx",
       "name": "Sicel",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "sda",
@@ -36487,13 +36431,6 @@
       "type": "L"
     },
     {
-      "alpha_3": "sjc",
-      "inverted_name": "Chinese, Shaojiang",
-      "name": "Shaojiang Chinese",
-      "scope": "I",
-      "type": "L"
-    },
-    {
       "alpha_3": "sjd",
       "inverted_name": "Sami, Kildin",
       "name": "Kildin Sami",
@@ -36812,6 +36749,12 @@
       "name": "Lamaholot",
       "scope": "I",
       "type": "L"
+    },
+    {
+      "alpha_3": "slq",
+      "name": "Salchuq",
+      "scope": "I",
+      "type": "E"
     },
     {
       "alpha_3": "slr",
@@ -37196,7 +37139,7 @@
       "alpha_3": "sog",
       "name": "Sogdian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "soh",
@@ -37433,7 +37376,7 @@
       "inverted_name": "Picene, South",
       "name": "South Picene",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "spy",
@@ -38079,7 +38022,7 @@
       "alpha_3": "sux",
       "name": "Sumerian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "suy",
@@ -38301,7 +38244,7 @@
       "alpha_3": "sxc",
       "name": "Sicanian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "sxe",
@@ -38344,7 +38287,7 @@
       "alpha_3": "sxo",
       "name": "Sorothaptic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "sxr",
@@ -38476,6 +38419,12 @@
       "name": "Semaq Beri",
       "scope": "I",
       "type": "L"
+    },
+    {
+      "alpha_3": "szd",
+      "name": "Seru",
+      "scope": "I",
+      "type": "E"
     },
     {
       "alpha_3": "sze",
@@ -40111,6 +40060,13 @@
       "type": "L"
     },
     {
+      "alpha_3": "tmk",
+      "inverted_name": "Tamang, Northwestern",
+      "name": "Northwestern Tamang",
+      "scope": "I",
+      "type": "L"
+    },
+    {
       "alpha_3": "tml",
       "inverted_name": "Citak, Tamnim",
       "name": "Tamnim Citak",
@@ -40587,6 +40543,12 @@
       "name": "Tanapag",
       "scope": "I",
       "type": "L"
+    },
+    {
+      "alpha_3": "tpw",
+      "name": "Tupí",
+      "scope": "I",
+      "type": "E"
     },
     {
       "alpha_3": "tpx",
@@ -41302,12 +41264,6 @@
       "type": "L"
     },
     {
-      "alpha_3": "tvi",
-      "name": "Tulai",
-      "scope": "I",
-      "type": "L"
-    },
-    {
       "alpha_3": "tvk",
       "inverted_name": "Ambrym, Southeast",
       "name": "Southeast Ambrym",
@@ -41517,7 +41473,7 @@
       "alpha_3": "txb",
       "name": "Tokharian B",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "txc",
@@ -41535,13 +41491,13 @@
       "alpha_3": "txg",
       "name": "Tangut",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "txh",
       "name": "Thracian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "txi",
@@ -41584,7 +41540,7 @@
       "alpha_3": "txr",
       "name": "Tartessian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "txs",
@@ -41881,7 +41837,7 @@
       "alpha_3": "uga",
       "name": "Ugaritic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "ugb",
@@ -42114,12 +42070,6 @@
       "type": "L"
     },
     {
-      "alpha_3": "uly",
-      "name": "Buli",
-      "scope": "I",
-      "type": "L"
-    },
-    {
       "alpha_3": "uma",
       "name": "Umatilla",
       "scope": "I",
@@ -42135,7 +42085,7 @@
       "alpha_3": "umc",
       "name": "Marrucinian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "umd",
@@ -42817,12 +42767,6 @@
       "type": "L"
     },
     {
-      "alpha_3": "vjk",
-      "name": "Bajjika",
-      "scope": "I",
-      "type": "L"
-    },
-    {
       "alpha_3": "vka",
       "name": "Kariyarra",
       "scope": "I",
@@ -42906,7 +42850,7 @@
       "alpha_3": "vma",
       "name": "Martuyhunira",
       "scope": "I",
-      "type": "E"
+      "type": "L"
     },
     {
       "alpha_3": "vmb",
@@ -43123,12 +43067,6 @@
       "name": "Venezuelan Sign Language",
       "scope": "I",
       "type": "L"
-    },
-    {
-      "alpha_3": "vsn",
-      "name": "Vedic Sanskrit",
-      "scope": "I",
-      "type": "H"
     },
     {
       "alpha_3": "vsv",
@@ -43996,7 +43934,7 @@
     },
     {
       "alpha_3": "wnb",
-      "name": "Mokati",
+      "name": "Wanambre",
       "scope": "I",
       "type": "L"
     },
@@ -44347,12 +44285,6 @@
       "type": "E"
     },
     {
-      "alpha_3": "wtb",
-      "name": "Matambwe",
-      "scope": "I",
-      "type": "L"
-    },
-    {
       "alpha_3": "wtf",
       "name": "Watiwa",
       "scope": "I",
@@ -44575,13 +44507,13 @@
       "alpha_3": "xae",
       "name": "Aequian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xag",
       "name": "Aghwan",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xai",
@@ -44635,7 +44567,7 @@
       "alpha_3": "xaq",
       "name": "Aquitanian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xar",
@@ -44690,7 +44622,7 @@
       "alpha_3": "xbc",
       "name": "Bactrian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xbd",
@@ -44775,20 +44707,20 @@
       "alpha_3": "xcc",
       "name": "Camunic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xce",
       "name": "Celtiberian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xcg",
       "inverted_name": "Gaulish, Cisalpine",
       "name": "Cisalpine Gaulish",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xch",
@@ -44819,13 +44751,13 @@
       "alpha_3": "xco",
       "name": "Chorasmian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xcr",
       "name": "Carian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xct",
@@ -44868,7 +44800,7 @@
       "alpha_3": "xdc",
       "name": "Dacian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xdk",
@@ -44880,7 +44812,7 @@
       "alpha_3": "xdm",
       "name": "Edomite",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xdo",
@@ -44905,7 +44837,7 @@
       "alpha_3": "xeb",
       "name": "Eblan",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xed",
@@ -44935,7 +44867,7 @@
       "alpha_3": "xep",
       "name": "Epi-Olmec",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xer",
@@ -44965,13 +44897,13 @@
       "alpha_3": "xfa",
       "name": "Faliscan",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xga",
       "name": "Galatian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xgb",
@@ -45037,19 +44969,19 @@
       "alpha_3": "xha",
       "name": "Harami",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xhc",
       "name": "Hunnic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xhd",
       "name": "Hadrami",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xhe",
@@ -45075,19 +45007,19 @@
       "alpha_3": "xhr",
       "name": "Hernican",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xht",
       "name": "Hattic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xhu",
       "name": "Hurrian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xhv",
@@ -45099,7 +45031,7 @@
       "alpha_3": "xib",
       "name": "Iberian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xii",
@@ -45111,7 +45043,7 @@
       "alpha_3": "xil",
       "name": "Illyrian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xin",
@@ -45135,7 +45067,7 @@
       "alpha_3": "xiv",
       "name": "Indus Valley Language",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xiy",
@@ -45318,37 +45250,37 @@
       "alpha_3": "xlc",
       "name": "Lycian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xld",
       "name": "Lydian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xle",
       "name": "Lemnian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xlg",
       "name": "Ligurian (Ancient)",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xli",
       "name": "Liburnian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xln",
       "name": "Alanic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xlo",
@@ -45360,26 +45292,26 @@
       "alpha_3": "xlp",
       "name": "Lepontic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xls",
       "name": "Lusitanian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xlu",
       "inverted_name": "Luwian, Cuneiform",
       "name": "Cuneiform Luwian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xly",
       "name": "Elymian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xma",
@@ -45409,7 +45341,7 @@
       "alpha_3": "xme",
       "name": "Median",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xmf",
@@ -45440,7 +45372,7 @@
       "inverted_name": "Macedonian, Ancient",
       "name": "Ancient Macedonian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xml",
@@ -45484,7 +45416,7 @@
       "alpha_3": "xmr",
       "name": "Meroitic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xms",
@@ -45541,7 +45473,7 @@
       "inverted_name": "North Arabian, Ancient",
       "name": "Ancient North Arabian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xnb",
@@ -45751,7 +45683,7 @@
       "alpha_3": "xpg",
       "name": "Phrygian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xph",
@@ -45808,7 +45740,7 @@
       "alpha_3": "xpp",
       "name": "Puyo-Paekche",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xpq",
@@ -45820,13 +45752,13 @@
       "alpha_3": "xpr",
       "name": "Parthian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xps",
       "name": "Pisidian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xpt",
@@ -45838,7 +45770,7 @@
       "alpha_3": "xpu",
       "name": "Punic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xpv",
@@ -45865,7 +45797,7 @@
       "alpha_3": "xpy",
       "name": "Puyo",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xpz",
@@ -45884,7 +45816,7 @@
       "alpha_3": "xqt",
       "name": "Qatabanian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xra",
@@ -45927,7 +45859,7 @@
       "alpha_3": "xrm",
       "name": "Armazic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xrn",
@@ -45939,7 +45871,7 @@
       "alpha_3": "xrr",
       "name": "Raetic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xrt",
@@ -45963,7 +45895,7 @@
       "alpha_3": "xsa",
       "name": "Sabaean",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xsb",
@@ -45975,13 +45907,13 @@
       "alpha_3": "xsc",
       "name": "Scythian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xsd",
       "name": "Sidetic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xse",
@@ -46051,6 +45983,12 @@
       "type": "L"
     },
     {
+      "alpha_3": "xss",
+      "name": "Assan",
+      "scope": "I",
+      "type": "E"
+    },
+    {
       "alpha_3": "xsu",
       "name": "Sanumá",
       "scope": "I",
@@ -46106,7 +46044,7 @@
       "inverted_name": "Gaulish, Transalpine",
       "name": "Transalpine Gaulish",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xth",
@@ -46153,7 +46091,7 @@
       "alpha_3": "xto",
       "name": "Tokharian A",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xtp",
@@ -46173,7 +46111,7 @@
       "inverted_name": "Tripuri, Early",
       "name": "Early Tripuri",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xts",
@@ -46258,7 +46196,7 @@
       "alpha_3": "xum",
       "name": "Umbrian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xun",
@@ -46283,7 +46221,7 @@
       "alpha_3": "xur",
       "name": "Urartian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xut",
@@ -46301,7 +46239,7 @@
       "alpha_3": "xve",
       "name": "Venetic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xvi",
@@ -46313,19 +46251,19 @@
       "alpha_3": "xvn",
       "name": "Vandalic",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xvo",
       "name": "Volscian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xvs",
       "name": "Vestinian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xwa",
@@ -46478,7 +46416,7 @@
       "alpha_3": "xzh",
       "name": "Zhang-Zhung",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "xzm",
@@ -46750,12 +46688,6 @@
     {
       "alpha_3": "ycp",
       "name": "Chepya",
-      "scope": "I",
-      "type": "L"
-    },
-    {
-      "alpha_3": "ycr",
-      "name": "Yilan Creole",
       "scope": "I",
       "type": "L"
     },
@@ -47086,12 +47018,6 @@
       "type": "L"
     },
     {
-      "alpha_3": "ykh",
-      "name": "Khamnigan Mongol",
-      "scope": "I",
-      "type": "L"
-    },
-    {
       "alpha_3": "yki",
       "name": "Yoke",
       "scope": "I",
@@ -47322,7 +47248,7 @@
       "alpha_3": "yms",
       "name": "Mysian",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "ymx",
@@ -47340,12 +47266,6 @@
     {
       "alpha_3": "yna",
       "name": "Aluo",
-      "scope": "I",
-      "type": "L"
-    },
-    {
-      "alpha_3": "ynb",
-      "name": "Yamben",
       "scope": "I",
       "type": "L"
     },
@@ -48224,12 +48144,6 @@
       "type": "L"
     },
     {
-      "alpha_3": "zem",
-      "name": "Zeem",
-      "scope": "I",
-      "type": "L"
-    },
-    {
       "alpha_3": "zen",
       "name": "Zenaga",
       "scope": "I",
@@ -48377,6 +48291,12 @@
       "type": "L"
     },
     {
+      "alpha_3": "zkb",
+      "name": "Koibal",
+      "scope": "I",
+      "type": "E"
+    },
+    {
       "alpha_3": "zkd",
       "name": "Kadu",
       "scope": "I",
@@ -48386,7 +48306,7 @@
       "alpha_3": "zkg",
       "name": "Koguryo",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "zkh",
@@ -48483,12 +48403,6 @@
       "type": "L"
     },
     {
-      "alpha_3": "zlu",
-      "name": "Zul",
-      "scope": "I",
-      "type": "L"
-    },
-    {
       "alpha_3": "zma",
       "name": "Manda (Australia)",
       "scope": "I",
@@ -48580,7 +48494,7 @@
     },
     {
       "alpha_3": "zmp",
-      "name": "Mbuun",
+      "name": "Mpuono",
       "scope": "I",
       "type": "L"
     },
@@ -48915,7 +48829,7 @@
       "alpha_3": "zra",
       "name": "Kara (Korea)",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "zrg",
@@ -48957,7 +48871,7 @@
       "alpha_3": "zsk",
       "name": "Kaskean",
       "scope": "I",
-      "type": "H"
+      "type": "A"
     },
     {
       "alpha_3": "zsl",
@@ -49066,6 +48980,12 @@
       "alpha_3": "zty",
       "inverted_name": "Zapotec, Yatee",
       "name": "Yatee Zapotec",
+      "scope": "I",
+      "type": "L"
+    },
+    {
+      "alpha_3": "zua",
+      "name": "Zeem",
       "scope": "I",
       "type": "L"
     },

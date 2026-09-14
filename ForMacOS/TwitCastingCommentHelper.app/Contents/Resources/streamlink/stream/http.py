@@ -1,14 +1,9 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+from typing import Dict
 
 from streamlink.exceptions import StreamError
+from streamlink.session import Streamlink
 from streamlink.stream.stream import Stream
 from streamlink.stream.wrappers import StreamIOIterWrapper, StreamIOThreadWrapper
-
-
-if TYPE_CHECKING:
-    from streamlink.session import Streamlink
 
 
 class HTTPStream(Stream):
@@ -18,7 +13,7 @@ class HTTPStream(Stream):
 
     __shortname__ = "http"
 
-    args: dict
+    args: Dict
     """A dict of keyword arguments passed to :meth:`requests.Session.request`, such as method, headers, cookies, etc."""
 
     def __init__(
@@ -40,7 +35,7 @@ class HTTPStream(Stream):
         self.args["url"] = url
         self.buffered = buffered
 
-    def __json__(self):  # ruff: ignore[bad-dunder-method-name]
+    def __json__(self):  # noqa: PLW3201
         req = self.session.http.prepare_new_request(**self.args)
 
         return dict(
@@ -60,7 +55,7 @@ class HTTPStream(Stream):
         The URL to the stream, prepared by :mod:`requests` with parameters read from :attr:`args`.
         """
 
-        return self.session.http.prepare_new_request(**self.args).url  # type: ignore[return-value, ty:invalid-return-type]
+        return self.session.http.prepare_new_request(**self.args).url  # type: ignore[return-value]
 
     def open(self):
         reqargs = self.session.http.valid_request_args(**self.args)

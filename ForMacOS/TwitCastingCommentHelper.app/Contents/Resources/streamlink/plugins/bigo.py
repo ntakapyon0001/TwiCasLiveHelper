@@ -8,20 +8,20 @@ $metadata category
 $metadata title
 """
 
+import logging
 import re
 
-from streamlink.logger import getLogger
 from streamlink.plugin import Plugin, pluginmatcher
 from streamlink.plugin.api import validate
 from streamlink.stream.hls import HLSStream
 
 
-log = getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
-@pluginmatcher(
-    re.compile(r"https?://(?:www\.)?bigo\.tv/(?P<site_id>[^/]+)$"),
-)
+@pluginmatcher(re.compile(
+    r"https?://(?:www\.)?bigo\.tv/(?P<site_id>[^/]+)$",
+))
 class Bigo(Plugin):
     _URL_API = "https://ta.bigo.tv/official_website/studio/getInternalStudioInfo"
 

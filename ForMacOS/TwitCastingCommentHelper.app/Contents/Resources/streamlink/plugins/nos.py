@@ -7,20 +7,20 @@ $metadata title
 $region Netherlands
 """
 
+import logging
 import re
 
-from streamlink.logger import getLogger
 from streamlink.plugin import Plugin, pluginmatcher
 from streamlink.plugin.api import validate
 from streamlink.stream.hls import HLSStream
 
 
-log = getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
-@pluginmatcher(
-    re.compile(r"https?://(?:\w+\.)?nos\.nl/(?:live$|livestream/|l/|video/|collectie/)"),
-)
+@pluginmatcher(re.compile(
+    r"https?://(?:\w+\.)?nos\.nl/(?:live|video|collectie)",
+))
 class NOS(Plugin):
     def _get_streams(self):
         data = self.session.http.get(
@@ -31,25 +31,16 @@ class NOS(Plugin):
                 validate.none_or_all(
                     validate.parse_json(),
                     {
-                        "@graph": validate.all(
-                            [dict],
-                            validate.filter(lambda item: item.get("@type") == "VideoObject"),
-                            validate.filter(lambda item: item.get("encodingFormat") == "application/vnd.apple.mpegurl"),
-                        ),
+                        "@type": "VideoObject",
+                        "encodingFormat": "application/vnd.apple.mpegurl",
+                        "contentUrl": validate.url(),
+                        "identifier": validate.any(int, str),
+                        "name": str,
                     },
-                    validate.get("@graph"),
-                    validate.get(0),
-                    validate.none_or_all(
-                        {
-                            "contentUrl": validate.url(),
-                            "identifier": validate.any(int, str),
-                            "name": str,
-                        },
-                        validate.union_get(
-                            "contentUrl",
-                            "identifier",
-                            "name",
-                        ),
+                    validate.union_get(
+                        "contentUrl",
+                        "identifier",
+                        "name",
                     ),
                 ),
             ),
@@ -59,16 +50,12 @@ class NOS(Plugin):
 
         hls_url, self.id, self.title = data
 
-        headers = {
-            "Origin": "https://nos.nl",
-            "Referer": self.url,
-        }
-        res = self.session.http.get(hls_url, headers=headers, raise_for_status=False)
+        res = self.session.http.get(hls_url, raise_for_status=False)
         if res.status_code >= 400:
             log.error("Content is inaccessible or may have expired")
             return
 
-        return HLSStream.parse_variant_playlist(self.session, hls_url, headers=headers)
+        return HLSStream.parse_variant_playlist(self.session, hls_url)
 
 
 __plugin__ = NOS

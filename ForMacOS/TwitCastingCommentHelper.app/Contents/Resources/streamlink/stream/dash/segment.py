@@ -1,16 +1,11 @@
-from __future__ import annotations
-
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Optional, Tuple
 from urllib.parse import urlparse
 
 from streamlink.stream.segmented.segment import Segment
 from streamlink.utils.times import fromtimestamp, now
-
-
-if TYPE_CHECKING:
-    from datetime import datetime
 
 
 EPOCH_START = fromtimestamp(0)
@@ -24,14 +19,16 @@ class TimelineSegment:
     d: int
 
 
-@dataclass(kw_only=True)
+@dataclass
 class DASHSegment(Segment):
     available_at: datetime = EPOCH_START
-    byterange: tuple[int, int | None] | None = None
+    init: bool = False
+    content: bool = True
+    byterange: Optional[Tuple[int, Optional[int]]] = None
 
     @property
     def name(self) -> str:
-        if self.init:
+        if self.init and not self.content:
             return "initialization"
         if self.num > -1:
             return str(self.num)

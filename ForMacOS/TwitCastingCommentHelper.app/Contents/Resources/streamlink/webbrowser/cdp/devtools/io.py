@@ -3,18 +3,17 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all modules.
 #
-# CDP version: v0.0.1510116
+# CDP version: v0.0.1359167
 # CDP domain: IO
 
 from __future__ import annotations
 
 import enum
-from collections.abc import Generator
+import typing
 from dataclasses import dataclass
-from typing import Any
 
 import streamlink.webbrowser.cdp.devtools.runtime as runtime
-from streamlink.webbrowser.cdp.devtools.util import T_JSON_DICT, CDPEvent
+from streamlink.webbrowser.cdp.devtools.util import T_JSON_DICT, event_class
 
 
 class StreamHandle(str):
@@ -35,7 +34,7 @@ class StreamHandle(str):
 
 def close(
     handle: StreamHandle,
-) -> Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
     """
     Close the stream, discard any temporary backing storage.
 
@@ -52,9 +51,9 @@ def close(
 
 def read(
     handle: StreamHandle,
-    offset: int | None = None,
-    size: int | None = None,
-) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[bool | None, str, bool]]:
+    offset: typing.Optional[int] = None,
+    size: typing.Optional[int] = None,
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.Tuple[typing.Optional[bool], str, bool]]:
     """
     Read a chunk of the stream
 
@@ -87,7 +86,7 @@ def read(
 
 def resolve_blob(
     object_id: runtime.RemoteObjectId,
-) -> Generator[T_JSON_DICT, T_JSON_DICT, str]:
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, str]:
     """
     Return UUID of Blob object specified by a remote object id.
 

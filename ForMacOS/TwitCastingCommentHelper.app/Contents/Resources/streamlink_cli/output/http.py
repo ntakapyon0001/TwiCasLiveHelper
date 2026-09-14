@@ -1,9 +1,8 @@
-from __future__ import annotations
-
 import socket
 from contextlib import suppress
 from http.server import BaseHTTPRequestHandler
 from io import BytesIO
+from typing import Optional
 
 from streamlink_cli.output.abc import Output
 
@@ -24,24 +23,21 @@ class HTTPRequest(BaseHTTPRequestHandler):
 class HTTPOutput(Output):
     socket: socket.socket
 
-    def __init__(self, host: str | None = "127.0.0.1", port: int = 0) -> None:
+    def __init__(self, host: Optional[str] = "127.0.0.1", port: int = 0) -> None:
         super().__init__()
         self.host = host
         self.port = port
-        self.conn: socket.socket | None = None
+        self.conn: Optional[socket.socket] = None
 
     @property
-    def addresses(self) -> list[str]:
+    def addresses(self):
         if self.host:
             return [self.host]
 
         addrs = {"127.0.0.1"}
         with suppress(socket.gaierror):
-            addrinfo = socket.getaddrinfo(socket.gethostname(), self.port, socket.AF_INET)
-            for _family, _type, _proto, _canonname, (address, *_) in addrinfo:
-                if not isinstance(address, str):
-                    continue
-                addrs.add(address)
+            for info in socket.getaddrinfo(socket.gethostname(), self.port, socket.AF_INET):
+                addrs.add(info[4][0])
 
         return sorted(addrs)
 
@@ -70,7 +66,7 @@ class HTTPOutput(Output):
             conn, _addr = self.socket.accept()
             conn.settimeout(None)
             self.conn = conn
-        except TimeoutError as err:
+        except socket.timeout as err:
             self.conn = None
             raise OSError("Socket accept timed out") from err
 
@@ -106,7 +102,7 @@ class HTTPOutput(Output):
         self.request = req
 
     def _write(self, data):
-        self.conn.sendall(data)  # type: ignore
+        self.conn.sendall(data)
 
     def _close(self):
         if self.conn:

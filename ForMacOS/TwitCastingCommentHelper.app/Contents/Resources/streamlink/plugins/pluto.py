@@ -8,54 +8,26 @@ $metadata category
 $metadata title
 """
 
+import logging
 import re
-from dataclasses import dataclass
-from typing import ClassVar
-from urllib.parse import parse_qsl, urljoin, urlparse
+from urllib.parse import parse_qsl, urljoin
 from uuid import uuid4
 
-from streamlink.logger import getLogger
-from streamlink.plugin import Plugin, PluginError, pluginmatcher
+from streamlink.exceptions import PluginError
+from streamlink.plugin import Plugin, pluginmatcher
 from streamlink.plugin.api import useragents, validate
-from streamlink.stream.hls import HLSSegment, HLSStream, HLSStreamReader, HLSStreamWriter, M3U8Parser
+from streamlink.stream.hls import HLSStream, HLSStreamReader, HLSStreamWriter
 from streamlink.utils.url import update_qsd
 
 
-log = getLogger(__name__)
-
-
-@dataclass
-class PlutoHLSSegment(HLSSegment):
-    ad: bool = False
-
-    _RE_AD: ClassVar[re.Pattern[str]] = re.compile(
-        r"""
-            _ad(?:/|%2F|_bumper)
-            |
-            plutotv_filler
-        """,
-        re.VERBOSE | re.IGNORECASE,
-    )
-
-    def __post_init__(self):
-        self.ad = self._is_ad()
-
-    def _is_ad(self) -> bool:
-        parsed = urlparse(self.uri)
-
-        if parsed.hostname and parsed.hostname.endswith("dai.google.com"):
-            return True
-
-        return re.search(self._RE_AD, parsed.path or "") is not None
-
-
-class PlutoM3U8Parser(M3U8Parser):
-    __segment__ = PlutoHLSSegment
+log = logging.getLogger(__name__)
 
 
 class PlutoHLSStreamWriter(HLSStreamWriter):
-    def should_filter_segment(self, segment: PlutoHLSSegment):  # type: ignore[override, ty:invalid-method-override]
-        return segment.ad or super().should_filter_segment(segment)
+    ad_re = re.compile(r"_ad/creative/|creative/\d+_ad/|dai\.google\.com|Pluto_TV_OandO/.*(Bumper|plutotv_filler)")
+
+    def should_filter_segment(self, segment):
+        return self.ad_re.search(segment.uri) is not None or super().should_filter_segment(segment)
 
 
 class PlutoHLSStreamReader(HLSStreamReader):
@@ -65,25 +37,24 @@ class PlutoHLSStreamReader(HLSStreamReader):
 class PlutoHLSStream(HLSStream):
     __shortname__ = "hls-pluto"
     __reader__ = PlutoHLSStreamReader
-    __parser__ = PlutoM3U8Parser
 
 
 @pluginmatcher(
     name="live",
     pattern=re.compile(
-        r"https?://(?:www\.)?pluto\.tv/(?:\w{2,}/)?live-tv/(?P<id>[^/?]+)",
+        r"https?://(?:www\.)?pluto\.tv/(?:\w{2}/)?live-tv/(?P<id>[^/]+)/?$",
     ),
 )
 @pluginmatcher(
     name="series",
     pattern=re.compile(
-        r"https?://(?:www\.)?pluto\.tv/(?:\w{2,}/)?on-demand/series/(?P<id_s>[^/]+)(?:/season/\d+)?/episode/(?P<id_e>[^/?]+)",
+        r"https?://(?:www\.)?pluto\.tv/(?:\w{2}/)?on-demand/series/(?P<id_s>[^/]+)(?:/season/\d+)?/episode/(?P<id_e>[^/]+)/?$",
     ),
 )
 @pluginmatcher(
     name="movies",
     pattern=re.compile(
-        r"https?://(?:www\.)?pluto\.tv/(?:\w{2,}/)?on-demand/movies/(?P<id>[^/?]+)",
+        r"https?://(?:www\.)?pluto\.tv/(?:\w{2}/)?on-demand/movies/(?P<id>[^/]+)/?$",
     ),
 )
 class Pluto(Plugin):
@@ -91,9 +62,7 @@ class Pluto(Plugin):
         super().__init__(*args, **kwargs)
         self.session.http.headers.update({"User-Agent": useragents.FIREFOX})
         self._app_version = None
-        if not (m := re.search(r"Firefox/(\d+(?:\.\d+)*)", useragents.FIREFOX)):
-            raise PluginError("Could not find Firefox version")
-        self._device_version = m[1]
+        self._device_version = re.search(r"Firefox/(\d+(?:\.\d+)*)", useragents.FIREFOX)[1]
         self._client_id = str(uuid4())
 
     @property
@@ -141,35 +110,27 @@ class Pluto(Plugin):
                 validate.transform(lambda obj: [("hls", obj["path"])]),
             ),
         )
-        schema_live = [
-            {
-                "name": str,
-                "id": str,
-                "slug": str,
-                "stitched": schema_paths,
-            },
-        ]
-        schema_vod = [
-            {
-                "name": str,
-                "id": str,
-                "slug": str,
-                "genre": str,
-                "stitched": validate.any(schema_paths, {}),
-                validate.optional("seasons"): [
-                    {
-                        "episodes": [
-                            {
-                                "name": str,
-                                "_id": str,
-                                "slug": str,
-                                "stitched": schema_paths,
-                            },
-                        ],
-                    },
-                ],
-            },
-        ]
+        schema_live = [{
+            "name": str,
+            "id": str,
+            "slug": str,
+            "stitched": schema_paths,
+        }]
+        schema_vod = [{
+            "name": str,
+            "id": str,
+            "slug": str,
+            "genre": str,
+            "stitched": validate.any(schema_paths, {}),
+            validate.optional("seasons"): [{
+                "episodes": [{
+                    "name": str,
+                    "_id": str,
+                    "slug": str,
+                    "stitched": schema_paths,
+                }],
+            }],
+        }]
 
         return self.session.http.get(
             "https://boot.pluto.tv/v4/start",
@@ -182,7 +143,6 @@ class Pluto(Plugin):
                 "deviceType": "web",
                 "clientID": self._client_id,
                 "clientModelNumber": "1.0.0",
-                "serverSideAds": "false",
                 **request,
             },
             schema=validate.Schema(
@@ -261,9 +221,7 @@ class Pluto(Plugin):
 
             params = dict(parse_qsl(data["stitcherParams"]))
             params["jwt"] = data["sessionToken"]
-            params["includeExtendedEvents"] = "true"
-            params["masterJWTPassthrough"] = "true"
-            url = urljoin(data["servers"]["stitcher"], "v2" + path)
+            url = urljoin(data["servers"]["stitcher"], path)
             url = update_qsd(url, params)
 
             return PlutoHLSStream.parse_variant_playlist(self.session, url)

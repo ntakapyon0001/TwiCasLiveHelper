@@ -5,16 +5,16 @@ $type live, vod
 $account Some streams require an account and subscription
 """
 
+import logging
 import re
 import time
 
-from streamlink.logger import getLogger
 from streamlink.plugin import Plugin, pluginargument, pluginmatcher
 from streamlink.plugin.api import useragents
 from streamlink.stream.hls import HLSStream, HLSStreamReader, HLSStreamWriter
 
 
-log = getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 class HLSStreamWriterYupptv(HLSStreamWriter):
@@ -82,7 +82,7 @@ class YuppTV(Plugin):
         authed = (
             self.session.http.cookies.get("BoxId")
             and self.session.http.cookies.get("YuppflixToken")
-        )  # fmt: skip
+        )
 
         login_box_id = self.get_option("boxid")
         login_yuppflix_token = self.get_option("yuppflixtoken")

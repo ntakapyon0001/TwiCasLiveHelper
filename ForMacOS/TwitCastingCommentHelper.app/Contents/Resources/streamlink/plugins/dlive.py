@@ -8,45 +8,26 @@ $metadata category
 $metadata title
 """
 
+import logging
 import re
 from textwrap import dedent
-from urllib.parse import parse_qsl, urlparse
 
-from streamlink.logger import getLogger
 from streamlink.plugin import Plugin, pluginmatcher
 from streamlink.plugin.api import validate
 from streamlink.stream.hls import HLSStream
-from streamlink.utils.times import fromtimestamp, now
 
 
-log = getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 class DLiveHLSStream(HLSStream):
     URL_SIGN = "https://live.prd.dlive.tv/hls/sign/url"
-    URL_KEY_EXPIRES = "Expires"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.unsigned_url = self.args["url"]
-        self.signed_url = ""
-        self.signed_url_expires = fromtimestamp(timestamp=0)
-
-    @property
-    def url(self):
-        if self.signed_url_expires < now():
-            log.debug("Getting new signed HLS playlist URL")
-            self.signed_url = self._get_signed_url()
-            params = dict(parse_qsl(urlparse(self.signed_url).query))
-            expires = int(params.get(self.URL_KEY_EXPIRES, "0"))
-            self.signed_url_expires = fromtimestamp(timestamp=expires)
-
-        return self.signed_url
-
-    def _get_signed_url(self):
-        return self.session.http.post(
+        self.args["url"] = self.session.http.post(
             self.URL_SIGN,
-            json={"playlisturi": self.unsigned_url},
+            json={"playlisturi": self.args["url"]},
             schema=validate.Schema(validate.url()),
         )
 
@@ -72,12 +53,12 @@ class DLive(Plugin):
     }
 
     @classmethod
-    def stream_weight(cls, stream: str) -> tuple[float, str]:
-        weight = cls.QUALITY_WEIGHTS.get(stream)
+    def stream_weight(cls, key):
+        weight = cls.QUALITY_WEIGHTS.get(key)
         if weight:
             return weight, "dlive"
 
-        return super().stream_weight(stream)
+        return super().stream_weight(key)
 
     def _get_streams_video(self, video):
         log.debug(f"Getting video HLS streams for {video}")

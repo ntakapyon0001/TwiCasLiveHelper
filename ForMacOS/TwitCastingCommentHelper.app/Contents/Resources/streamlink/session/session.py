@@ -1,13 +1,14 @@
-from __future__ import annotations
-
+import logging
 import warnings
 from functools import lru_cache
-from typing import TYPE_CHECKING, Any
+from typing import Any, Dict, Optional, Tuple, Type
 
-import streamlink.compat  # ruff: ignore[unused-import]
+import streamlink.compat  # noqa: F401
 from streamlink import __version__
 from streamlink.exceptions import NoPluginError, PluginError, StreamlinkDeprecationWarning
-from streamlink.logger import getLogger
+from streamlink.logger import StreamlinkLogger
+from streamlink.options import Options
+from streamlink.plugin.plugin import Plugin
 from streamlink.session.http import HTTPSession
 from streamlink.session.options import StreamlinkOptions
 from streamlink.session.plugins import StreamlinkPlugins
@@ -15,14 +16,9 @@ from streamlink.utils.l10n import Localization
 from streamlink.utils.url import update_scheme
 
 
-if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    from streamlink.options import Options
-    from streamlink.plugin.plugin import Plugin
-
-
-log = getLogger(".".join(__name__.split(".")[:-1]))
+# Ensure that the Logger class returned is Streamslink's for using the API (for backwards compatibility)
+logging.setLoggerClass(StreamlinkLogger)
+log = logging.getLogger(".".join(__name__.split(".")[:-1]))
 
 
 class Streamlink:
@@ -32,7 +28,7 @@ class Streamlink:
 
     def __init__(
         self,
-        options: Mapping[str, Any] | Options | None = None,
+        options: Optional[Dict[str, Any]] = None,
         *,
         plugins_builtin: bool = True,
         plugins_lazy: bool = True,
@@ -85,12 +81,12 @@ class Streamlink:
 
         return self.options.get(key)
 
-    @lru_cache(maxsize=128)  # ruff: ignore[cached-instance-method]
+    @lru_cache(maxsize=128)  # noqa: B019
     def resolve_url(
         self,
         url: str,
         follow_redirect: bool = True,
-    ) -> tuple[str, type[Plugin], str]:
+    ) -> Tuple[str, Type[Plugin], str]:
         """
         Attempts to find a plugin that can use this URL.
 
@@ -100,8 +96,7 @@ class Streamlink:
 
         :param url: a URL to match against loaded plugins
         :param follow_redirect: follow redirects
-        :raise NoPluginError: on plugin resolve failure
-        :return: A tuple of plugin name, plugin class and resolved URL
+        :raises NoPluginError: on plugin resolve failure
         """
 
         url = update_scheme("https://", url, force=False)
@@ -111,7 +106,7 @@ class Streamlink:
         if follow_redirect:
             # Attempt to handle a redirect URL
             try:
-                res = self.http.head(url, allow_redirects=True, acceptable_status=[501])
+                res = self.http.head(url, allow_redirects=True, acceptable_status=[501])  # type: ignore[call-arg]
 
                 # Fall back to GET request if server doesn't handle HEAD.
                 if res.status_code == 501:
@@ -124,20 +119,19 @@ class Streamlink:
 
         raise NoPluginError
 
-    def resolve_url_no_redirect(self, url: str) -> tuple[str, type[Plugin], str]:
+    def resolve_url_no_redirect(self, url: str) -> Tuple[str, Type[Plugin], str]:
         """
         Attempts to find a plugin that can use this URL.
 
         The default protocol (https) will be prefixed to the URL if not specified.
 
         :param url: a URL to match against loaded plugins
-        :raise NoPluginError: on plugin resolve failure
-        :return: A tuple of plugin name, plugin class and resolved URL
+        :raises NoPluginError: on plugin resolve failure
         """
 
         return self.resolve_url(url, follow_redirect=False)
 
-    def streams(self, url: str, options: Options | None = None, **params):
+    def streams(self, url: str, options: Optional[Options] = None, **params):
         """
         Attempts to find a plugin and extracts streams from the *url* if a plugin was found.
 

@@ -98,7 +98,8 @@ class StreamIOThreadWrapper(io.IOBase):
         if self.filler.error and self.buffer.length == 0:
             raise self.filler.error
 
-        return self.buffer.read(size, block=self.filler.is_alive(), timeout=self.timeout)
+        return self.buffer.read(size, block=self.filler.is_alive(),
+                                timeout=self.timeout)
 
     def close(self):
         self.filler.stop()

@@ -1,26 +1,25 @@
-from __future__ import annotations
-
 import base64
 import re
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, TypeAlias
+from typing import Any, AsyncGenerator, Awaitable, Callable, Coroutine, List, Mapping, Optional, Set
 
 import trio
 
-from streamlink.webbrowser.cdp.connection import CDPConnection
+from streamlink.session import Streamlink
+from streamlink.webbrowser.cdp.connection import CDPConnection, CDPSession
 from streamlink.webbrowser.cdp.devtools import fetch, network, page, runtime, target
 from streamlink.webbrowser.cdp.exceptions import CDPError
 from streamlink.webbrowser.chromium import ChromiumWebbrowser
 
 
-if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator, Awaitable, Callable, Coroutine, Mapping, MutableMapping
+try:
+    from typing import Self, TypeAlias  # type: ignore[attr-defined]
+except ImportError:  # pragma: no cover
+    from typing_extensions import Self, TypeAlias
 
-    from streamlink.session import Streamlink
-    from streamlink.webbrowser.cdp.connection import CDPSession
 
-    TRequestHandlerCallable: TypeAlias = "Callable[[CDPClientSession, fetch.RequestPaused], Awaitable]"
+TRequestHandlerCallable: TypeAlias = Callable[["CDPClientSession", fetch.RequestPaused], Awaitable]
 
 
 _re_url_pattern_wildcard = re.compile(r"(.+?)?(\\+)?([*?])")
@@ -66,7 +65,7 @@ class RequestPausedHandler:
 class CMRequestProxy:
     body: str
     response_code: int
-    response_headers: MutableMapping[str, str] | None
+    response_headers: Optional[Mapping[str, str]]
 
 
 class CDPClient:
@@ -87,8 +86,7 @@ class CDPClient:
     ``streamlink.webbrowser.cdp.devtools`` package, but be aware that only a subset of the available domains is supported.
     """
 
-    def __init__(self, session: Streamlink, cdp_connection: CDPConnection, nursery: trio.Nursery, headless: bool):
-        self.streamlink = session
+    def __init__(self, cdp_connection: CDPConnection, nursery: trio.Nursery, headless: bool):
         self.cdp_connection = cdp_connection
         self.nursery = nursery
         self.headless = headless
@@ -97,13 +95,13 @@ class CDPClient:
     def launch(
         cls,
         session: Streamlink,
-        runner: Callable[[CDPClient], Coroutine],
-        executable: str | None = None,
-        timeout: float | None = None,
-        cdp_host: str | None = None,
-        cdp_port: int | None = None,
-        cdp_timeout: float | None = None,
-        headless: bool | None = None,
+        runner: Callable[[Self], Coroutine],
+        executable: Optional[str] = None,
+        timeout: Optional[float] = None,
+        cdp_host: Optional[str] = None,
+        cdp_port: Optional[int] = None,
+        cdp_timeout: Optional[float] = None,
+        headless: Optional[bool] = None,
     ) -> Any:
         """
         Start a new :mod:`trio` runloop and do the following things:
@@ -176,25 +174,27 @@ class CDPClient:
     async def run(
         cls,
         session: Streamlink,
-        executable: str | None = None,
-        timeout: float | None = None,
-        cdp_host: str | None = None,
-        cdp_port: int | None = None,
-        cdp_timeout: float | None = None,
+        executable: Optional[str] = None,
+        timeout: Optional[float] = None,
+        cdp_host: Optional[str] = None,
+        cdp_port: Optional[int] = None,
+        cdp_timeout: Optional[float] = None,
         headless: bool = False,
-    ) -> AsyncGenerator[CDPClient, None]:
+    ) -> AsyncGenerator[Self, None]:
         webbrowser = ChromiumWebbrowser(executable=executable, host=cdp_host, port=cdp_port)
+        nursery: trio.Nursery
         async with webbrowser.launch(headless=headless, timeout=timeout) as nursery:
             websocket_url = webbrowser.get_websocket_url(session)
+            cdp_connection: CDPConnection
             async with CDPConnection.create(websocket_url, timeout=cdp_timeout) as cdp_connection:
-                yield cls(session, cdp_connection, nursery, headless)
+                yield cls(cdp_connection, nursery, headless)
 
     @asynccontextmanager
     async def session(
         self,
         fail_unhandled_requests: bool = False,
-        max_buffer_size: int | None = None,
-    ) -> AsyncGenerator[CDPClientSession, None]:
+        max_buffer_size: Optional[int] = None,
+    ) -> AsyncGenerator["CDPClientSession", None]:
         """
         Create a new CDP session on an empty target (browser tab).
 
@@ -218,13 +218,13 @@ class CDPClientSession:
         cdp_client: CDPClient,
         cdp_session: CDPSession,
         fail_unhandled_requests: bool = False,
-        max_buffer_size: int | None = None,
+        max_buffer_size: Optional[int] = None,
     ):
         self.cdp_client = cdp_client
         self.cdp_session = cdp_session
         self._fail_unhandled = fail_unhandled_requests
-        self._request_handlers: list[RequestPausedHandler] = []
-        self._requests_handled: set[str] = set()
+        self._request_handlers: List[RequestPausedHandler] = []
+        self._requests_handled: Set[str] = set()
         self._max_buffer_size = max_buffer_size
 
     def add_request_handler(
@@ -250,7 +250,7 @@ class CDPClientSession:
         )
 
     @asynccontextmanager
-    async def navigate(self, url: str, referrer: str | None = None) -> AsyncGenerator[page.FrameId, None]:
+    async def navigate(self, url: str, referrer: Optional[str] = None) -> AsyncGenerator[page.FrameId, None]:
         """
         Async context manager for opening the URL with an optional referrer and starting the optional interception
         of network requests and responses.
@@ -286,9 +286,7 @@ class CDPClientSession:
             await self.cdp_session.send(page.enable())
 
             try:
-                frame_id, _loader_id, error, _is_download = await self.cdp_session.send(
-                    page.navigate(url=url, referrer=referrer),
-                )
+                frame_id, _loader_id, error = await self.cdp_session.send(page.navigate(url=url, referrer=referrer))
                 if error:
                     raise CDPError(f"Navigation error: {error}")
 
@@ -308,7 +306,7 @@ class CDPClientSession:
             if frame_stopped_loading.frame_id == frame_id:
                 return
 
-    async def evaluate(self, expression: str, await_promise: bool = True, timeout: float | None = None) -> Any:
+    async def evaluate(self, expression: str, await_promise: bool = True, timeout: Optional[float] = None) -> Any:
         """
         Evaluate an optionally async JavaScript expression and return its result.
 
@@ -334,59 +332,53 @@ class CDPClientSession:
     async def continue_request(
         self,
         request: fetch.RequestPaused,
-        url: str | None = None,
-        method: str | None = None,
-        post_data: str | None = None,
-        headers: Mapping[str, str] | None = None,
+        url: Optional[str] = None,
+        method: Optional[str] = None,
+        post_data: Optional[str] = None,
+        headers: Optional[Mapping[str, str]] = None,
     ):
         """
         Continue a request and optionally override the request method, URL, POST data or request headers.
         """
-        await self.cdp_session.send(
-            fetch.continue_request(
-                request_id=request.request_id,
-                url=url,
-                method=method,
-                post_data=base64.b64encode(post_data.encode()).decode() if post_data is not None else None,
-                headers=self._headers_entries_from_mapping(headers),
-            ),
-        )
+        await self.cdp_session.send(fetch.continue_request(
+            request_id=request.request_id,
+            url=url,
+            method=method,
+            post_data=base64.b64encode(post_data.encode()).decode() if post_data is not None else None,
+            headers=self._headers_entries_from_mapping(headers),
+        ))
         self._requests_handled.add(request.request_id)
 
     async def fail_request(
         self,
         request: fetch.RequestPaused,
-        error_reason: str | None = None,
+        error_reason: Optional[str] = None,
     ):
         """
         Let a request fail, with an optional error reason which defaults to ``BlockedByClient``.
         """
-        await self.cdp_session.send(
-            fetch.fail_request(
-                request_id=request.request_id,
-                error_reason=network.ErrorReason(error_reason or network.ErrorReason.BLOCKED_BY_CLIENT),
-            ),
-        )
+        await self.cdp_session.send(fetch.fail_request(
+            request_id=request.request_id,
+            error_reason=network.ErrorReason(error_reason or network.ErrorReason.BLOCKED_BY_CLIENT),
+        ))
         self._requests_handled.add(request.request_id)
 
     async def fulfill_request(
         self,
         request: fetch.RequestPaused,
         response_code: int = 200,
-        response_headers: Mapping[str, str] | None = None,
-        body: str | None = None,
+        response_headers: Optional[Mapping[str, str]] = None,
+        body: Optional[str] = None,
     ) -> None:
         """
         Fulfill a response and override its status code, headers and body.
         """
-        await self.cdp_session.send(
-            fetch.fulfill_request(
-                request_id=request.request_id,
-                response_code=response_code,
-                response_headers=self._headers_entries_from_mapping(response_headers),
-                body=base64.b64encode(body.encode()).decode() if body is not None else None,
-            ),
-        )
+        await self.cdp_session.send(fetch.fulfill_request(
+            request_id=request.request_id,
+            response_code=response_code,
+            response_headers=self._headers_entries_from_mapping(response_headers),
+            body=base64.b64encode(body.encode()).decode() if body is not None else None,
+        ))
         self._requests_handled.add(request.request_id)
 
     @asynccontextmanager
@@ -394,7 +386,7 @@ class CDPClientSession:
         self,
         request: fetch.RequestPaused,
         response_code: int = 200,
-        response_headers: MutableMapping[str, str] | None = None,
+        response_headers: Optional[Mapping[str, str]] = None,
     ) -> AsyncGenerator[CMRequestProxy, None]:
         """
         Async context manager wrapper around :meth:`fulfill_request()` which retrieves the response body,
@@ -408,7 +400,7 @@ class CDPClientSession:
             if b64encoded:  # pragma: no branch
                 body = base64.b64decode(body).decode()
         proxy = CMRequestProxy(body=body, response_code=response_code, response_headers=response_headers)
-        yield proxy  # ruff: ignore[fallible-context-manager]
+        yield proxy
         await self.fulfill_request(
             request=request,
             response_code=proxy.response_code,
@@ -417,8 +409,11 @@ class CDPClientSession:
         )
 
     @staticmethod
-    def _headers_entries_from_mapping(headers: Mapping[str, str] | None):
-        return None if headers is None else [fetch.HeaderEntry(name=name, value=value) for name, value in headers.items()]
+    def _headers_entries_from_mapping(headers: Optional[Mapping[str, str]]):
+        return None if headers is None else [
+            fetch.HeaderEntry(name=name, value=value)
+            for name, value in headers.items()
+        ]
 
     async def _on_target_detached_from_target(self) -> None:
         detached_from_target: target.DetachedFromTarget
@@ -445,41 +440,5 @@ class CDPClientSession:
         user_agent: str = await self.evaluate("navigator.userAgent", await_promise=False)
         if not user_agent:  # pragma: no cover
             raise CDPError("Could not read navigator.userAgent value")
-        user_agent = re.sub(r"Headless", "", user_agent, flags=re.IGNORECASE)
+        user_agent = re.sub("Headless", "", user_agent, flags=re.IGNORECASE)
         await self.cdp_session.send(network.set_user_agent_override(user_agent=user_agent))
-
-    async def apply_cookies(self) -> None:
-        """
-        Copy all cookies from Streamlink's HTTP session to the CDP session.
-        """
-        cookies = [
-            network.CookieParam(
-                name=cookie.name,
-                value=cookie.value or "",
-                domain=cookie.domain,
-                path=cookie.path,
-                expires=network.TimeSinceEpoch(cookie.expires) if cookie.expires is not None else None,
-                secure=cookie.secure,
-            )
-            for cookie in self.cdp_client.streamlink.http.cookies
-        ]
-        await self.cdp_session.send(
-            network.set_cookies(cookies=cookies),
-        )
-
-    async def retrieve_cookies(self) -> None:
-        """
-        Copy all cookies from the CDP session to Streamlink's HTTP session.
-        """
-        cookies = await self.cdp_session.send(
-            network.get_cookies(),
-        )
-        for cookie in cookies:
-            self.cdp_client.streamlink.http.cookies.set(
-                name=cookie.name,
-                value=cookie.value,
-                domain=cookie.domain,
-                path=cookie.path,
-                expires=None if cookie.expires == -1 else cookie.expires,
-                secure=cookie.secure,
-            )

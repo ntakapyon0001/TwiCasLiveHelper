@@ -1,27 +1,23 @@
-from __future__ import annotations
-
 import errno
+import logging
+import sys
 from contextlib import suppress
+from pathlib import Path
 from threading import Event, Lock, Thread
-from typing import TYPE_CHECKING
+from typing import Optional
 
-from streamlink.logger import getLogger
-from streamlink_cli.output import HTTPOutput, PlayerOutput
-
-
-if TYPE_CHECKING:
-    from streamlink.stream.stream import StreamIO
-    from streamlink_cli.console.progress import Progress
-    from streamlink_cli.output import Output
+from streamlink.stream.stream import StreamIO
+from streamlink_cli.output import FileOutput, HTTPOutput, Output, PlayerOutput
+from streamlink_cli.utils.progress import Progress
 
 
 # Use the main Streamlink CLI module as logger
-log = getLogger("streamlink.cli")
+log = logging.getLogger("streamlink.cli")
 
 
 ACCEPTABLE_ERRNO = errno.EPIPE, errno.EINVAL, errno.ECONNRESET
 with suppress(AttributeError):
-    ACCEPTABLE_ERRNO += (errno.WSAECONNABORTED,)  # type: ignore[assignment, attr-defined]
+    ACCEPTABLE_ERRNO += (errno.WSAECONNABORTED,)  # type: ignore[assignment,attr-defined]
 
 
 def _noop(_):
@@ -75,20 +71,34 @@ class PlayerPollThread(Thread):
 class StreamRunner:
     """Read data from a stream and write it to the output."""
 
-    playerpoller: PlayerPollThread | None = None
+    playerpoller: Optional[PlayerPollThread] = None
+    progress: Optional[Progress] = None
 
     def __init__(
         self,
         stream: StreamIO,
         output: Output,
-        progress: Progress | None = None,
+        show_progress: bool = False,
     ):
         self.stream = stream
         self.output = output
-        self.progress = progress
+        self.is_http = isinstance(output, HTTPOutput)
+
+        filename: Optional[Path] = None
 
         if isinstance(output, PlayerOutput):
             self.playerpoller = PlayerPollThread(stream, output)
+            if output.record:
+                filename = output.record.filename
+
+        elif isinstance(output, FileOutput):
+            if output.filename:
+                filename = output.filename
+            elif output.record:
+                filename = output.record.filename
+
+        if filename and show_progress and sys.stderr:
+            self.progress = Progress(sys.stderr, filename)
 
     def run(
         self,
@@ -97,17 +107,16 @@ class StreamRunner:
     ) -> None:
         read = self.stream.read
         write = self.output.write
-        progress = _noop
+        progress = self.progress.write if self.progress else _noop
 
         if self.playerpoller:
             self.playerpoller.start()
         if self.progress:
             self.progress.start()
-            progress = self.progress.write
 
         # TODO: Fix error messages (s/when/while/) and only log "Stream ended" when it ended on its own (data == b"").
         #       These are considered breaking changes of the CLI output, which is parsed by 3rd party tools.
-        try:  # ruff: ignore[too-many-statements-in-try-clause]
+        try:
             write(prebuffer)
             progress(prebuffer)
             del prebuffer
@@ -130,7 +139,7 @@ class StreamRunner:
         except OSError as err:
             if self.playerpoller and err.errno in ACCEPTABLE_ERRNO:
                 self.playerpoller.playerclosed()
-            elif isinstance(self.output, HTTPOutput) and err.errno in ACCEPTABLE_ERRNO:
+            elif self.is_http and err.errno in ACCEPTABLE_ERRNO:
                 log.info("HTTP connection closed")
             else:
                 raise OSError(f"Error when writing to output: {err}, exiting") from err

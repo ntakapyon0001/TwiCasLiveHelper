@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 from collections import OrderedDict
-from typing import Generic, TypeVar
+from typing import Generic, Optional, OrderedDict as TOrderedDict, TypeVar
 
 
 TCacheKey = TypeVar("TCacheKey")
@@ -10,10 +8,10 @@ TCacheValue = TypeVar("TCacheValue")
 
 class LRUCache(Generic[TCacheKey, TCacheValue]):
     def __init__(self, num: int):
-        self.cache: OrderedDict[TCacheKey, TCacheValue] = OrderedDict()
+        self.cache: TOrderedDict[TCacheKey, TCacheValue] = OrderedDict()
         self.num = num
 
-    def get(self, key: TCacheKey) -> TCacheValue | None:
+    def get(self, key: TCacheKey) -> Optional[TCacheValue]:
         if key not in self.cache:
             return None
         self.cache.move_to_end(key)

@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 import re
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, List, Optional, Tuple, Type, TypeVar
 
 
 _BOOLEAN_TRUE = "yes", "1", "true", "on"
@@ -23,17 +21,17 @@ def boolean(value: str) -> bool:
     return value.lower() in _BOOLEAN_TRUE
 
 
-def comma_list(values: str) -> list[str]:
+def comma_list(values: str) -> List[str]:
     return [val.strip() for val in values.split(",")]
 
 
 # noinspection PyPep8Naming
 class comma_list_filter:
-    def __init__(self, acceptable: list[str], unique: bool = False):
+    def __init__(self, acceptable: List[str], unique: bool = False):
         self.acceptable = tuple(acceptable)
         self.unique = unique
 
-    def __call__(self, values: str) -> list[str]:
+    def __call__(self, values: str) -> List[str]:
         res = [item for item in comma_list(values) if item in self.acceptable]
         return sorted(set(res)) if self.unique else res
 
@@ -52,7 +50,7 @@ def filesize(value: str) -> int:
     return num(int, ge=1)(size)
 
 
-def keyvalue(value: str) -> tuple[str, str]:
+def keyvalue(value: str) -> Tuple[str, str]:
     match = _KEYVALUE_RE.match(value.lstrip())
     if not match:
         raise ValueError("Invalid key=value format")
@@ -67,29 +65,29 @@ _TNum = TypeVar("_TNum", int, float)
 class num(Generic[_TNum]):
     def __init__(
         self,
-        numtype: type[_TNum],
-        ge: _TNum | None = None,
-        gt: _TNum | None = None,
-        le: _TNum | None = None,
-        lt: _TNum | None = None,
+        numtype: Type[_TNum],
+        ge: Optional[_TNum] = None,
+        gt: Optional[_TNum] = None,
+        le: Optional[_TNum] = None,
+        lt: Optional[_TNum] = None,
     ):
-        self.numtype: type[_TNum] = numtype
-        self.ge: _TNum | None = ge
-        self.gt: _TNum | None = gt
-        self.le: _TNum | None = le
-        self.lt: _TNum | None = lt
+        self.numtype: Type[_TNum] = numtype
+        self.ge: Optional[_TNum] = ge
+        self.gt: Optional[_TNum] = gt
+        self.le: Optional[_TNum] = le
+        self.lt: Optional[_TNum] = lt
         self.__name__ = numtype.__name__
 
     def __call__(self, value: Any) -> _TNum:
         val: _TNum = self.numtype(value)
 
-        if self.ge is not None and not (val >= self.ge):
+        if self.ge is not None and val < self.ge:
             raise ValueError(f"{self.__name__} value must be >={self.ge}, but is {val}")
-        if self.gt is not None and not (val > self.gt):
+        if self.gt is not None and val <= self.gt:
             raise ValueError(f"{self.__name__} value must be >{self.gt}, but is {val}")
-        if self.le is not None and not (val <= self.le):
+        if self.le is not None and val > self.le:
             raise ValueError(f"{self.__name__} value must be <={self.le}, but is {val}")
-        if self.lt is not None and not (val < self.lt):
+        if self.lt is not None and val >= self.lt:
             raise ValueError(f"{self.__name__} value must be <{self.lt}, but is {val}")
 
         return val

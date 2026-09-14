@@ -1,13 +1,7 @@
-from __future__ import annotations
-
 from threading import Event
-from typing import TYPE_CHECKING
 
+from streamlink.buffers import Buffer
 from streamlink.stream.stream import StreamIO
-
-
-if TYPE_CHECKING:
-    from streamlink.buffers import Buffer
 
 
 class FilteredStream(StreamIO):

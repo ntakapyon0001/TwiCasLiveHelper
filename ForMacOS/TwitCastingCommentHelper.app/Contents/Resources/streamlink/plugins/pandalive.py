@@ -6,57 +6,34 @@ $metadata author
 $metadata title
 """
 
+import logging
 import re
 
-from streamlink.logger import getLogger
 from streamlink.plugin import Plugin, pluginmatcher
 from streamlink.plugin.api import validate
 from streamlink.stream.hls import HLSStream
 
 
-log = getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 @pluginmatcher(
-    re.compile(r"https?://(?:\w+\.)?pandalive\.co\.kr/(?:\w+/)?play/(?P<channel>[^/#?]+)"),
+    re.compile(r"https?://(?:www\.)?pandalive\.co\.kr/live/play/[^/]+"),
 )
 class Pandalive(Plugin):
-    _URL_API_MEMBER = "https://api.pandalive.co.kr/v1/member/bj"
-
     def _get_streams(self):
-        result, user_id = self.session.http.post(
-            self._URL_API_MEMBER,
-            data={"userId": self.match["channel"]},
-            raise_for_status=False,
+        media_code = self.session.http.get(
+            self.url,
             schema=validate.Schema(
-                validate.parse_json(),
-                validate.any(
-                    validate.all(
-                        {
-                            "result": False,
-                            "message": str,
-                        },
-                        validate.union_get("result", "message"),
-                    ),
-                    validate.all(
-                        {
-                            "bjInfo": {
-                                "idx": int,
-                            },
-                        },
-                        validate.get(("bjInfo", "idx")),
-                        validate.transform(lambda data: (True, data)),
-                    ),
-                ),
+                re.compile(r"""routePath:\s*(?P<q>["'])(\\u002F|/)live(\\u002F|/)play(\\u002F|/)(?P<id>.+?)(?P=q)"""),
+                validate.any(None, validate.get("id")),
             ),
         )
-        if not result:
-            log.error(user_id or "Failed to get user ID")
-            return
-        if not user_id:
+
+        if not media_code:
             return
 
-        log.debug(f"{user_id=}")
+        log.debug(f"Media code: {media_code}")
 
         json = self.session.http.post(
             "https://api.pandalive.co.kr/v1/live/play",
@@ -65,7 +42,7 @@ class Pandalive(Plugin):
             },
             data={
                 "action": "watch",
-                "userId": user_id,
+                "userId": media_code,
             },
             acceptable_status=(200, 400),
             schema=validate.Schema(
@@ -81,21 +58,15 @@ class Pandalive(Plugin):
                             "liveType": str,
                         },
                         "PlayList": {
-                            validate.optional("hls"): [
-                                {
-                                    "url": validate.url(),
-                                },
-                            ],
-                            validate.optional("hls2"): [
-                                {
-                                    "url": validate.url(),
-                                },
-                            ],
-                            validate.optional("hls3"): [
-                                {
-                                    "url": validate.url(),
-                                },
-                            ],
+                            validate.optional("hls"): [{
+                                "url": validate.url(),
+                            }],
+                            validate.optional("hls2"): [{
+                                "url": validate.url(),
+                            }],
+                            validate.optional("hls3"): [{
+                                "url": validate.url(),
+                            }],
                         },
                         "result": bool,
                         "message": str,
